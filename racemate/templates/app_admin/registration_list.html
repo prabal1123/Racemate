@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Registrations</h2>
+<table class="table-auto">
+  <thead>
+    <tr>
+      <th>ID</th><th>Name</th><th>Email</th><th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for reg in registrations %}
+    <tr>
+      <td>{{ reg.id }}</td>
+      <td>{{ reg.name }}</td>
+      <td>{{ reg.email }}</td>
+      <td>
+        <a href="{% url 'registration_edit' pk=reg.id %}">Edit</a>
+        |
+        <form action="{% url 'registration_delete' pk=reg.id %}" method="post" style="display:inline">
+          {% csrf_token %}
+          <button type="submit" onclick="return confirm('Delete this registration?');">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% empty %}
+      <tr><td colspan="4">No registrations found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

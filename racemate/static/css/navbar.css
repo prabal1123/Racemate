@@ -1,0 +1,147 @@
+/* ==============================
+   Navbar Styling (Growbots)
+   ============================== */
+
+/* Reset + base */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #ffffff;
+}
+.site-navbar ul, .site-navbar li { list-style: none; margin: 0; padding: 0; }
+
+/* Bar container */
+.site-navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e9edf2;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+
+/* Row layout: brand left, links center, account right */
+.nav-inner {
+  display: flex;
+  align-items: center;
+  height: 72px;
+  gap: 16px;
+}
+.brand { flex: 0 0 auto; }
+.nav-links {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+}
+.nav-right { flex: 0 0 auto; display: flex; align-items: center; }
+
+/* Brand */
+.brand {
+  font-size: 1.75rem;
+  font-weight: 800;
+  text-decoration: none;
+  color: #1f3b77;
+  letter-spacing: -0.02em;
+  transition: opacity 0.2s ease;
+}
+.brand:hover { opacity: 0.85; }
+
+/* Desktop links */
+.link {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 16px;
+  text-decoration: none;
+  color: #111827;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.link:hover { background-color: #f3f6fa; }
+.link.active {
+  background-color: #18376f;
+  color: #ffffff;
+  box-shadow: inset 0 1px 3px rgba(255,255,255,0.15),
+              0 4px 14px rgba(24,55,111,0.25);
+}
+
+/* Account dropdown button */
+.account-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  border-radius: 16px;
+  background-color: #f3f5f9;
+  border: 1px solid #e0e4ea;
+  color: #111827;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.account-btn:hover { background-color: #e9edf3; border-color: #d6dbe3; }
+.dropdown-wrapper[aria-expanded="true"] .account-btn {
+  background-color: #e4e9f0; border-color: #ccd3de;
+}
+.account-btn .chev { font-size: .9rem; transform: translateY(1px); }
+
+/* Dropdown */
+.dropdown-wrapper { position: relative; }
+.dropdown-menu {
+  display: none;
+  position: absolute; right: 0; top: calc(100% + 10px);
+  min-width: 220px; background-color: #fff;
+  border: 1px solid #e5e7eb; border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.1);
+  padding: 8px 0; z-index: 100;
+}
+.dropdown-wrapper[aria-expanded="true"] .dropdown-menu { display: block; }
+.dropdown-label { padding: 8px 16px; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
+.dropdown-sep { border: none; border-top: 1px solid #eef1f4; margin: 6px 0; }
+.dropdown-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 16px;
+  text-decoration: none; color: #111827; font-weight: 500;
+  background: transparent; border: none; cursor: pointer;
+  transition: background 0.2s ease;
+}
+.dropdown-item:hover { background-color: #f3f6fa; }
+.dropdown-item.destructive { color: #b42318; }
+
+/* Mobile */
+.mobile-toggle {
+  display: none; /* hidden on desktop */
+  align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  margin-left: auto;
+  border: 1px solid #e0e4ea; border-radius: 10px;
+  background: #f7f9fc; cursor: pointer;
+}
+.mobile-menu { display: none; background: #fff; border-top: 1px solid #e5e7eb; padding: 1rem 0; }
+.mobile-links { margin: 0; padding: 0; }
+.mobile-link {
+  display: block; padding: 10px 1.5rem;
+  text-decoration: none; color: #111827; font-weight: 500;
+  transition: background .2s ease;
+}
+.mobile-link:hover { background: #f3f6fa; }
+.mobile-divider { height: 1px; background: #e5e7eb; margin: .5rem 0; }
+
+/* Responsive behavior */
+@media (max-width: 767px) {
+  .nav-links { display: none !important; }
+  .nav-right { display: none !important; }
+  .mobile-toggle { display: inline-flex; }
+  .mobile-menu { display: block; }
+}
+
+/* Prevent content from hiding under fixed bar */
+main, .page-content { padding-top: 88px; }
+
+/* Optional subtle gradient edge */
+.site-navbar::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: linear-gradient(to right, rgba(24,55,111,0.08), transparent 50%);
+}

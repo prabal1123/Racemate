@@ -1,0 +1,375 @@
+<!-- {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <meta charset="UTF-8" />
+  <title>Registration Form</title>
+</head>
+<body>
+  <h1>Registration Form</h1>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="POST" id="regForm" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <label for="{{ form.name.id_for_label }}">Name:</label><br>
+    {{ form.name }}<br>
+    {{ form.name.errors }}
+
+    <label for="{{ form.fathers_name.id_for_label }}">Father's Name:</label><br>
+    {{ form.fathers_name }}<br>
+    {{ form.fathers_name.errors }}
+
+    <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth:</label><br>
+    {{ form.date_of_birth }}<br>
+    {{ form.date_of_birth.errors }}
+
+    
+    <p>
+      Age on event: <strong id="age_display">—</strong>
+      &nbsp;|&nbsp;
+      Predicted category: <strong id="category_display">—</strong>
+    </p>
+
+    <label for="{{ form.profession.id_for_label }}">Profession:</label><br>
+    {{ form.profession }}<br>
+    {{ form.profession.errors }}
+
+    <label for="{{ form.address.id_for_label }}">Address:</label><br>
+    {{ form.address }}<br>
+    {{ form.address.errors }}
+
+    <label for="id_state">State:</label><br>
+    <select name="state" id="id_state" data-selected-state="{{ form.state.value|default:'' }}">
+      <option value="">---------</option>
+      {% for s in states %}
+        <option value="{{ s.id }}">{{ s.name }}</option>
+      {% endfor %}
+    </select><br>
+
+    <label for="id_district_fk">District:</label><br>
+    <select name="district_fk" id="id_district_fk" data-selected-district="{{ form.district_fk.value|default:'' }}">
+      <option value="">---------</option>
+      
+    </select><br>
+
+    <label for="{{ form.representing_from.id_for_label }}">Representing From:</label><br>
+    {{ form.representing_from }}<br>
+    {{ form.representing_from.errors }}
+
+    <label for="{{ form.mobile_number.id_for_label }}">Mobile Number:</label><br>
+    {{ form.mobile_number }}<br>
+    {{ form.mobile_number.errors }}
+
+    <label for="{{ form.aadhar_number.id_for_label }}">Aadhar Number:</label><br>
+    {{ form.aadhar_number }}<br>
+    {{ form.aadhar_number.errors }}
+
+    <label for="{{ form.events.id_for_label }}">Events:</label><br>
+    {{ form.events }}<br>
+    {{ form.events.errors }}
+
+    <br>
+    <button type="submit">Submit</button>
+  </form>
+
+  <a href="{% url 'home' %}">Back to Home</a>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  
+  const stateSelect = document.getElementById('id_state');
+  const districtSelect = document.getElementById('id_district_fk');
+
+  function loadDistricts(stateId, preselectDistrictId) {
+    districtSelect.innerHTML = '<option value="">Loading...</option>';
+    if (!stateId) {
+      districtSelect.innerHTML = '<option value="">---------</option>';
+      return;
+    }
+    const url = "{% url 'ajax_load_districts' %}?state=" + stateId;
+    fetch(url)
+      .then(resp => resp.json())
+      .then(data => {
+        districtSelect.innerHTML = '<option value="">---------</option>';
+        data.districts.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = d.name;
+          if (preselectDistrictId && String(preselectDistrictId) === String(d.id)) {
+            opt.selected = true;
+          }
+          districtSelect.appendChild(opt);
+        });
+      })
+      .catch(err => {
+        console.error('Error loading districts', err);
+        districtSelect.innerHTML = '<option value="">---------</option>';
+      });
+  }
+
+  stateSelect.addEventListener('change', function() {
+    const stateId = this.value;
+    loadDistricts(stateId, null);
+  });
+
+  const preselectedState = stateSelect.getAttribute('data-selected-state');
+  const preselectedDistrict = districtSelect.getAttribute('data-selected-district');
+
+  if (preselectedState) {
+    stateSelect.value = preselectedState;
+    loadDistricts(preselectedState, preselectedDistrict);
+  }
+
+  
+  const dobInput = document.getElementById('id_date_of_birth');
+  const ageDisplay = document.getElementById('age_display');
+  const categoryDisplay = document.getElementById('category_display');
+
+  // Set eventDate here. Replace with a static event date or pass from view/context.
+  // Example: to use a specific event date, change to: new Date('2026-01-01')
+  const eventDate = new Date(); // default to today; update to event date if available
+
+  function computeAgeOn(dobString, onDate) {
+    if (!dobString) return null;
+    const d = new Date(dobString);
+    if (isNaN(d)) return null;
+    let years = onDate.getFullYear() - d.getFullYear();
+    if ((onDate.getMonth() < d.getMonth()) || (onDate.getMonth() === d.getMonth() && onDate.getDate() < d.getDate())) {
+      years -= 1;
+    }
+    return years;
+  }
+
+  function clientAssignCategory(age) {
+    // This mirrors the server-side assign_category() roughly.
+    // Keep consistent with server logic; update both if you change rules.
+    if (age === null) return 'Unspecified';
+    if (age >= 56) return 'Masters Men 56+';
+    if (age >= 46 && age <= 55) return 'Masters Men 46 to 55 years';
+    if (age >= 36 && age <= 45) return 'Masters Men 36 to 45 years';
+    if (age >= 19 && age <= 22) return 'Men under-23 (19-22)';
+    if (age >= 19) return 'Men Elite & Women Elite (19 & above)';
+    if (age >= 17 && age <= 18) return 'Junior Boys & Junior Girls (17 & 18)';
+    if (age >= 15 && age <= 16) return 'Sub-Junior Boys & Sub-Junior Girls (15 & 16)';
+    if (age >= 12 && age <= 14) return 'Youth Boys & Youth Girls (12-14)';
+    return 'Other / Not categorized';
+  }
+
+  function updateAgeAndCategory() {
+    const dobVal = dobInput ? dobInput.value : null;
+    const age = computeAgeOn(dobVal, eventDate);
+    ageDisplay.textContent = (age === null || isNaN(age)) ? '—' : age;
+    categoryDisplay.textContent = (age === null || isNaN(age)) ? '—' : clientAssignCategory(age);
+  }
+
+  if (dobInput) {
+    dobInput.addEventListener('change', updateAgeAndCategory);
+    // if initial value present, compute on load
+    if (dobInput.value) {
+      updateAgeAndCategory();
+    }
+  }
+});
+</script>
+</body>
+</html> -->
+
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Register</title>
+
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding: 18px; }
+    label { font-weight: 600; display:block; margin-top:12px; }
+    input, select, textarea { display:block; margin-top:6px; padding:8px; border:1px solid #cfcfcf; border-radius:6px; width: 320px; max-width:100%; }
+    .field-error { color: #b91c1c; margin-top:6px; font-size:0.95rem; }
+    .messages { list-style:none; padding:0; margin:0 0 12px 0; }
+    .messages li { padding:8px 12px; background:#e6ffed; border:1px solid #b7f0c6; margin-bottom:6px; border-radius:6px; }
+    fieldset { border:1px solid #e5e7eb; padding:10px; border-radius:6px; margin-top:12px; max-width:740px;}
+    .submit { margin-top:14px; padding:10px 16px; border-radius:6px; background:#111827; color:white; border:none; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <h1>Registration Form</h1>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="post" id="regForm" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <!-- Name -->
+    <label for="{{ form.name.id_for_label }}">Name</label>
+    {{ form.name }}
+    {% if form.name.errors %}<div class="field-error">{{ form.name.errors|striptags }}</div>{% endif %}
+
+    <!-- Father's name -->
+    <label for="{{ form.fathers_name.id_for_label }}">Father's Name</label>
+    {{ form.fathers_name }}
+    {% if form.fathers_name.errors %}<div class="field-error">{{ form.fathers_name.errors|striptags }}</div>{% endif %}
+
+    <!-- Date of birth (flatpickr will attach to this input) -->
+    <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
+    {{ form.date_of_birth }}
+    {% if form.date_of_birth.errors %}<div class="field-error">{{ form.date_of_birth.errors|striptags }}</div>{% endif %}
+
+    <!-- Profession -->
+    <label for="{{ form.profession.id_for_label }}">Profession</label>
+    {{ form.profession }}
+    {% if form.profession.errors %}<div class="field-error">{{ form.profession.errors|striptags }}</div>{% endif %}
+
+    <!-- Address -->
+    <label for="{{ form.address.id_for_label }}">Address</label>
+    {{ form.address }}
+    {% if form.address.errors %}<div class="field-error">{{ form.address.errors|striptags }}</div>{% endif %}
+
+    <!-- State select (rendered from states passed in context) -->
+    <label for="id_state">State</label>
+    <select name="state" id="id_state" data-selected-state="{{ form.state.value|default:'' }}">
+      <option value="">---------</option>
+      {% for s in states %}
+        <option value="{{ s.id }}" {% if form.state.value|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+    {% if form.state.errors %}<div class="field-error">{{ form.state.errors|striptags }}</div>{% endif %}
+
+    <!-- District select (populated via AJAX) -->
+    <label for="id_district_fk">District</label>
+    <select name="district_fk" id="id_district_fk" data-selected-district="{{ form.district_fk.value|default:'' }}">
+      <option value="">---------</option>
+    </select>
+    {% if form.district_fk.errors %}<div class="field-error">{{ form.district_fk.errors|striptags }}</div>{% endif %}
+
+    <!-- Representing from -->
+    <label for="{{ form.representing_from.id_for_label }}">Representing From</label>
+    {{ form.representing_from }}
+    {% if form.representing_from.errors %}<div class="field-error">{{ form.representing_from.errors|striptags }}</div>{% endif %}
+
+    <!-- Mobile -->
+    <label for="{{ form.mobile_number.id_for_label }}">Mobile Number</label>
+    {{ form.mobile_number }}
+    {% if form.mobile_number.errors %}<div class="field-error">{{ form.mobile_number.errors|striptags }}</div>{% endif %}
+
+    <!-- Aadhaar (masked server-side) -->
+    <label for="{{ form.aadhar_number.id_for_label }}">Aadhaar Number</label>
+    {{ form.aadhar_number }}
+    {% if form.aadhar_number.errors %}<div class="field-error">{{ form.aadhar_number.errors|striptags }}</div>{% endif %}
+
+    <!-- Events (ManyToMany) -->
+    <fieldset>
+      <legend>Events</legend>
+      {{ form.events }}
+      {% if form.events.errors %}<div class="field-error">{{ form.events.errors|striptags }}</div>{% endif %}
+    </fieldset>
+
+    <button type="submit" class="submit">Submit</button>
+  </form>
+
+  <!-- NAMESPACED back link (accounts app has app_name='accounts') -->
+  <a href="{% url 'accounts:home' %}">Back to Home</a>
+
+
+
+  <!-- Libraries: Flatpickr (JS) -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <!-- Robust district loader + flatpickr init -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Flatpickr attach to DOB
+    try {
+      var dobInput = document.querySelector("#id_date_of_birth") || document.querySelector("input[name='date_of_birth']");
+      if (dobInput) {
+        if (dobInput.type === "date") try { dobInput.type = "text"; } catch(e) { /* ignore */ }
+        flatpickr(dobInput, {
+          dateFormat: "Y-m-d",
+          altInput: true,
+          altFormat: "F j, Y",
+          allowInput: true,
+          maxDate: "today"
+        });
+        console.log("[flatpickr] attached to DOB");
+      } else {
+        console.warn("[flatpickr] DOB input not found");
+      }
+    } catch (err) {
+      console.error("Flatpickr init error:", err);
+    }
+
+    // District AJAX loader
+    const stateSelect = document.getElementById('id_state');
+    const districtSelect = document.getElementById('id_district_fk');
+
+    function setDistrictOptions(list, preselect) {
+      districtSelect.innerHTML = '<option value="">---------</option>';
+      (list || []).forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name;
+        if (preselect && String(preselect) === String(d.id)) opt.selected = true;
+        districtSelect.appendChild(opt);
+      });
+    }
+
+    async function loadDistricts(stateId, preselectDistrictId) {
+      if (!districtSelect) return;
+      districtSelect.innerHTML = '<option value="">Loading...</option>';
+      if (!stateId) {
+        districtSelect.innerHTML = '<option value="">---------</option>';
+        return;
+      }
+
+      const url = "{% url 'accounts:ajax_load_districts' %}?state=" + encodeURIComponent(stateId);
+
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Network response was not ok: ' + resp.status);
+        const data = await resp.json();
+        setDistrictOptions(data.districts || [], preselectDistrictId);
+      } catch (err) {
+        console.error('Error loading districts:', err);
+        districtSelect.innerHTML = '<option value="">---------</option>';
+      }
+    }
+
+    if (stateSelect) {
+      stateSelect.addEventListener('change', function () {
+        const stateId = this.value;
+        loadDistricts(stateId, null);
+      });
+    }
+
+    const preselectedState = stateSelect ? stateSelect.getAttribute('data-selected-state') : null;
+    const preselectedDistrict = districtSelect ? districtSelect.getAttribute('data-selected-district') : null;
+
+    if (preselectedState) {
+      try { stateSelect.value = preselectedState; } catch(e) { /* ignore */ }
+      loadDistricts(preselectedState, preselectedDistrict);
+    }
+  });
+  </script>
+</body>
+</html>

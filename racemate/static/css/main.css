@@ -1,0 +1,238 @@
+/* :root{
+  --bg:#fbfbfb; --card:#fff; --muted:#6b7280; --accent:#111827;
+  --button-bg:#f3f4f6; --button-border:#d1d5db; --success:#16a34a;
+  --border:#e6e6e6;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:var(--bg); color:var(--accent);
+}
+
+.topbar{
+  background:var(--card); border-bottom:1px solid var(--border);
+  padding:18px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.brand{display:flex; align-items:center; gap:12px}
+.brand-title{font-weight:700; text-decoration:none; color:var(--accent); letter-spacing:-0.02em}
+.brand-tag{color:var(--muted); font-size:13px}
+.nav-actions .whoami{font-size:13px; color:var(--muted); margin-right:6px}
+
+.container{max-width:920px; margin:28px auto; padding:18px}
+.card{
+  background:var(--card); border:1px solid #eaeaea; border-radius:10px; padding:18px;
+  box-shadow:0 1px 2px rgba(10,10,10,.03);
+}
+.h2{margin:0 0 6px}
+.h3{margin:0}
+.muted{color:var(--muted)}
+.mt{margin-top:18px}
+.row{display:flex; flex-wrap:wrap}
+.gap{gap:10px}
+.stack-sm>*+*{margin-top:6px}
+.stack-md>*+*{margin-top:10px}
+.strong{font-weight:700}
+
+.btn{
+  display:inline-block; padding:10px 14px; border-radius:8px;
+  background:var(--button-bg); border:1px solid var(--button-border);
+  text-decoration:none; color:var(--accent); font-weight:600;
+}
+
+.provider-list{list-style:none; padding:0; margin:12px 0 0; display:flex; gap:10px; flex-wrap:wrap}
+
+.messages{margin-bottom:12px}
+.msg{
+  padding:10px 12px; border-radius:8px; background:#f8fafc;
+  border:1px solid #e6f4ea; color:var(--muted);
+}
+.msg.success{ border-color: rgba(16,185,129,.15); background: rgba(16,185,129,.06); color: var(--success); }
+
+.site-footer{ text-align:center; color:var(--muted); padding:28px 0; font-size:14px }
+
+@media (max-width:600px){
+  .container{margin:16px}
+  .brand-title{font-size:18px}
+} */
+
+
+:root{
+  --bg:#fbfbfb;
+  --card:#fff;
+  --muted:#6b7280;
+  --accent:#111827;
+  --button-bg:#f3f4f6;
+  --button-border:#d1d5db;
+  --success:#16a34a;
+  --border:#e6e6e6;
+
+  /* Navbar height (desktop) */
+  --navbar-height: 80px;
+}
+
+/* Adjust height on smaller screens if navbar compresses */
+@media (max-width: 600px) {
+  :root {
+    --navbar-height: 68px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ------------------------------
+   BODY + CONTENT PADDING FIX
+------------------------------- */
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--accent);
+  padding-top: 0; /* reset default padding */
+}
+
+/* ✅ Main page content sits below fixed navbar */
+main.site-content {
+  padding-top: var(--navbar-height);
+}
+
+/* ------------------------------
+   NAVBAR
+------------------------------- */
+.topbar {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-title {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+.brand-tag {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.nav-actions .whoami {
+  font-size: 13px;
+  color: var(--muted);
+  margin-right: 6px;
+}
+
+/* ------------------------------
+   LAYOUT
+------------------------------- */
+.container {
+  max-width: 920px;
+  margin: 28px auto;
+  padding: 18px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 1px 2px rgba(10,10,10,.03);
+}
+
+.h2 { margin: 0 0 6px; }
+.h3 { margin: 0; }
+.muted { color: var(--muted); }
+.mt { margin-top: 18px; }
+.row { display: flex; flex-wrap: wrap; }
+.gap { gap: 10px; }
+.stack-sm > * + * { margin-top: 6px; }
+.stack-md > * + * { margin-top: 10px; }
+.strong { font-weight: 700; }
+
+/* ------------------------------
+   BUTTONS
+------------------------------- */
+.btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  text-decoration: none;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ------------------------------
+   MISC
+------------------------------- */
+.provider-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.messages { margin-bottom: 12px; }
+
+.msg {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e6f4ea;
+  color: var(--muted);
+}
+
+.msg.success {
+  border-color: rgba(16,185,129,.15);
+  background: rgba(16,185,129,.06);
+  color: var(--success);
+}
+
+/* ------------------------------
+   FOOTER
+------------------------------- */
+.site-footer {
+  text-align: center;
+  color: var(--muted);
+  padding: 28px 0;
+  font-size: 14px;
+}
+
+/* ------------------------------
+   RESPONSIVE
+------------------------------- */
+@media (max-width: 600px) {
+  .container {
+    margin: 16px;
+  }
+
+  .brand-title {
+    font-size: 18px;
+  }
+}

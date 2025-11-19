@@ -1,0 +1,177 @@
+<!-- <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Navbar</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="{% url 'home' %}">Home</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'admin:index' %}">Admin Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'registration_list' %}">Registration List</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'analysis_dashboard' %}">Analysis Dashboard</a>
+        </li>
+        
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Account
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="{% url 'account_logout' %}">Logout</a></li>
+            <li><a class="dropdown-item" href="{% url 'account_login' %}">Login</a></li>
+            <li><a class="dropdown-item" href="{% url 'account_signup' %}">Sign up</a></li>
+          </ul>
+        </li>
+
+
+      </ul>
+    </div>
+  </div>
+</nav> -->
+
+
+
+
+
+   {% load static %}
+
+<nav class="site-navbar">
+  <div class="container">
+    <div class="nav-inner">
+      <!-- Left: Brand -->
+      <a href="{% url 'home' %}" class="brand">Racemate</a>
+
+      <!-- Center: Links -->
+      {% with name=request.resolver_match.url_name namespace=request.resolver_match.namespace %}
+      <div class="nav-links" id="nav-links-desktop">
+
+        <a href="{% url 'home' %}"
+           class="link {% if name == 'home' %}active{% endif %}">
+          Home
+        </a>
+
+        <!-- Lists dropdown: Registration, Bib, Start -->
+        <div class="nav-item dropdown lists-dropdown">
+          <button
+            class="link dropdown-toggle {% if name == 'registration_list' or name == 'start_list' or name == 'registration_bib_list' and namespace == 'app_bib' %}active{% endif %}"
+            id="listsDropdown"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            aria-haspopup="true">
+            Lists
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="listsDropdown">
+            <li>
+              <a class="dropdown-item {% if name == 'registration_list' %}active{% endif %}"
+                 href="{% url 'registration_list' %}">Registration List</a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if name == 'registration_bib_list' and namespace == 'app_bib' %}active{% endif %}"
+                 href="{% url 'app_bib:registration_bib_list' %}">Bib List</a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if name == 'start_list' %}active{% endif %}"
+                 href="{% url 'start_list' %}">Start List</a>
+            </li>
+          </ul>
+        </div>
+
+        <a href="{% url 'admin:index' %}"
+           class="link {% if namespace == 'admin' %}active{% endif %}">
+          Admin Dashboard
+        </a>
+
+        <a href="{% url 'analysis_dashboard' %}"
+           class="link {% if name == 'analysis_dashboard' %}active{% endif %}">
+          Analysis Dashboard
+        </a>
+      </div>
+      {% endwith %}
+
+      <!-- Right: Account -->
+      <div class="nav-right">
+        <div class="dropdown-wrapper">
+          <button
+            id="account-trigger"
+            class="account-btn dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            aria-expanded="false">
+            Account
+          </button>
+
+          <div id="account-menu" class="dropdown-menu" role="menu">
+            <div class="dropdown-label">My Account</div>
+            <hr class="dropdown-sep" />
+            <a class="dropdown-item" role="menuitem" href="{% url 'account_login' %}">Login</a>
+            <a class="dropdown-item" role="menuitem" href="{% url 'account_signup' %}">Sign up</a>
+            <hr class="dropdown-sep" />
+            <a class="dropdown-item destructive" role="menuitem" href="{% url 'account_logout' %}">Log out</a>
+          </div>
+        </div>
+
+        <!-- Mobile toggle (shown only on mobile) -->
+        <button id="mobile-toggle" class="mobile-toggle" aria-expanded="false" aria-controls="mobile-menu" type="button" aria-label="Open navigation">
+          ☰
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
+      <ul class="mobile-links">
+        <li><a href="{% url 'home' %}" class="mobile-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a></li>
+
+        <!-- Mobile collapsible Lists -->
+        <li class="mobile-submenu">
+          <button class="mobile-link mobile-submenu-toggle"
+                  aria-expanded="false"
+                  aria-controls="mobile-lists-submenu">
+            Lists ▾
+          </button>
+          <ul id="mobile-lists-submenu" class="mobile-submenu-list" hidden>
+            <li>
+              <a href="{% url 'registration_list' %}"
+                 class="mobile-link {% if request.resolver_match.url_name == 'registration_list' %}active{% endif %}">
+                 Registration List
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'app_bib:registration_bib_list' %}"
+                 class="mobile-link {% if request.resolver_match.url_name == 'registration_bib_list' and request.resolver_match.namespace == 'app_bib' %}active{% endif %}">
+                 Bib List
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'start_list' %}"
+                 class="mobile-link {% if request.resolver_match.url_name == 'start_list' %}active{% endif %}">
+                 Start List
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <li><a href="{% url 'admin:index' %}" class="mobile-link {% if request.resolver_match.namespace == 'admin' %}active{% endif %}">Admin Dashboard</a></li>
+        <li><a href="{% url 'analysis_dashboard' %}" class="mobile-link {% if request.resolver_match.url_name == 'analysis_dashboard' %}active{% endif %}">Analysis Dashboard</a></li>
+
+        <li class="mobile-divider"></li>
+        <li><a href="{% url 'account_login' %}" class="mobile-link">Login</a></li>
+        <li><a href="{% url 'account_signup' %}" class="mobile-link">Sign up</a></li>
+        <li><a href="{% url 'account_logout' %}" class="mobile-link destructive">Log out</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+<script defer src="{% static 'js/navbar.js' %}"></script>

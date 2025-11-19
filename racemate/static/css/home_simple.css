@@ -1,0 +1,121 @@
+/* home.css - styles for accounts home/hero card */
+:root{
+  --card-bg: #ffffff;
+  --panel-bg: #f3f8fb;
+  --muted: #6b7280;
+  --border: #e6edf3;
+  --primary-1: #0b63b8;
+  --primary-2: #0d4ea0;
+  --btn-text: #fff;
+  --shadow-soft: 0 8px 24px rgba(13,46,72,0.06);
+}
+
+/* container */
+.hm-container{
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* outer hero card */
+.hm-hero {
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  padding: 32px;
+  position: relative;
+  overflow: visible;
+}
+
+/* hero inner text */
+.hm-hero h1 {
+  font-size: 46px;
+  line-height: 1.05;
+  margin: 0 0 8px 0;
+  font-weight: 800;
+  color: #0f1724;
+  letter-spacing: -0.5px;
+}
+
+.hm-hero p.hm-sub {
+  margin: 0 0 20px 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+/* pale info panel under heading */
+.hm-info-panel {
+  margin-top: 18px;
+  background: var(--panel-bg);
+  border-radius: 12px;
+  border: 1px solid rgba(13,46,72,0.06);
+  padding: 24px;
+  color: #12202b;
+  font-size: 18px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+}
+
+/* button group */
+.hm-cta {
+  margin-top: 26px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* default button look */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  font-size: 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .12s ease;
+  box-shadow: 0 6px 18px rgba(13,46,72,0.06);
+}
+
+/* primary gradient pill */
+.btn.primary {
+  color: var(--btn-text);
+  background: linear-gradient(180deg, var(--primary-1) 0%, var(--primary-2) 100%);
+  padding-left: 22px;
+  padding-right: 28px;
+  font-weight: 600;
+}
+
+/* secondary / outline */
+.btn.outline {
+  background: transparent;
+  color: #0f1724;
+  border: 1px solid var(--border);
+  box-shadow: none;
+  padding: 12px 20px;
+  font-weight: 600;
+}
+
+/* small icon style inside button (if you add icons) */
+.btn .icon {
+  display:inline-flex;
+  width:20px;
+  height:20px;
+  align-items:center;
+  justify-content:center;
+}
+
+/* hover */
+.btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(13,46,72,0.08); }
+.btn.outline:hover { background: rgba(13,46,72,0.02); }
+
+/* responsive */
+@media (max-width: 768px) {
+  .hm-hero h1 { font-size: 34px; }
+  .hm-info-panel { font-size: 16px; padding: 18px; }
+  .hm-container { padding: 20px; }
+  .btn { font-size: 15px; padding: 10px 16px; }
+}

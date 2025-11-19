@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h1>Registrations Analysis</h1>
+
+<section id="filters" style="margin-bottom:1rem;">
+  <label>Date from: <input id="date_from" type="text" placeholder="YYYY-MM-DD"></label>
+  <label style="margin-left:1rem;">Date to: <input id="date_to" type="text" placeholder="YYYY-MM-DD"></label>
+  <button id="refreshBtn" style="margin-left:1rem;">Refresh</button>
+</section>
+
+<section id="cards" style="margin-bottom:1rem;">
+  <div style="display:inline-block; padding:12px; border:1px solid #ddd; border-radius:6px; margin-right:8px;">
+    <strong>Total</strong><div id="total" style="font-size:1.4rem;">0</div>
+  </div>
+</section>
+
+<section style="margin-bottom:1rem;">
+  <h3>Breakdown</h3>
+
+  <table id="analysisTable" style="width:100%; border-collapse:collapse; border:1px solid #e6e6e6;">
+    <thead>
+      <tr style="background:#fafafa;">
+        <th style="border:1px solid #ddd; padding:8px; text-align:left;">
+          Age group<br>
+          <input id="hdr_age" placeholder="e.g. 19-22 or 19" style="width:96%; box-sizing:border-box;">
+        </th>
+
+        <th style="border:1px solid #ddd; padding:8px; text-align:left;">
+          Event<br>
+          <select id="hdr_event" style="width:100%; box-sizing:border-box;">
+            <option value="">All events</option>
+            {% for e in events %}
+              <option value="{{ e.name|escape }}">{{ e.name }}</option>
+            {% endfor %}
+          </select>
+        </th>
+
+        <th style="border:1px solid #ddd; padding:8px; text-align:left;">
+          Gender<br>
+          <select id="hdr_gender" style="width:100%; box-sizing:border-box;">
+            <option value="">All</option>
+            <option value="M">M</option>
+            <option value="F">F</option>
+            <option value="O">Other</option>
+          </select>
+        </th>
+
+        <th style="border:1px solid #ddd; padding:8px; text-align:right;">
+          Count<br>
+          <button id="exportVisible" title="Export visible rows as CSV" style="margin-top:4px;">Export visible CSV</button>
+        </th>
+      </tr>
+
+
+      <tr>
+        <th style="border:1px solid #ddd; padding:8px; text-align:left; font-weight:600;">Age group</th>
+        <th style="border:1px solid #ddd; padding:8px; text-align:left; font-weight:600;">Event</th>
+        <th style="border:1px solid #ddd; padding:8px; text-align:left; font-weight:600;">Gender</th>
+        <th style="border:1px solid #ddd; padding:8px; text-align:right; font-weight:600;">Count</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr><td colspan="4" style="padding:12px; text-align:center; color:#666;">Loading...</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+(function () {
+  // IMPORTANT: use the app_admin namespace because we moved routes there
+  const apiUrl = "{% url 'api_analysis_summary' %}";
+  const exportServerUrl = "{% url 'analysis_export_csv' %}";
+
+  // DOM helpers
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+  // controls
+  const dateFrom = $('#date_from');
+  const dateTo = $('#date_to');
+  const refreshBtn = $('#refreshBtn');
+
+  // header filters
+  const hdrAge = $('#hdr_age');
+  const hdrEvent = $('#hdr_event');
+  const hdrGender = $('#hdr_gender');
+  const exportVisibleBtn = $('#exportVisible');
+
+  // storage
+  let allRows = [];      // full breakdown from server (array of objects)
+  let visibleRows = [];  // filtered view
+
+  // init datepickers
+  flatpickr("#date_from", {dateFormat:'Y-m-d', allowInput:true});
+  flatpickr("#date_to", {dateFormat:'Y-m-d', allowInput:true});
+
+  function buildServerQuery() {
+    const q = new URLSearchParams();
+    if (dateFrom.value) q.append('date_from', dateFrom.value);
+    if (dateTo.value) q.append('date_to', dateTo.value);
+    return q.toString();
+  }
+
+  function fetchSummary() {
+    const q = buildServerQuery();
+    const url = apiUrl + (q ? ('?' + q) : '');
+    setTableLoading();
+    fetch(url)
+      .then(resp => { if (!resp.ok) throw new Error(resp.statusText); return resp.json(); })
+      .then(json => {
+        console.log('API JSON:', json);
+        document.getElementById('total').textContent = json.total ?? 0;
+
+        if (Array.isArray(json.breakdown)) {
+          allRows = json.breakdown;
+        } else if (Array.isArray(json.by_age_event_gender)) {
+          allRows = json.by_age_event_gender;
+        } else if (Array.isArray(json.aggregations)) {
+          allRows = json.aggregations;
+        } else if (Array.isArray(json.registrations)) {
+          allRows = synthesizeBreakdown(json.registrations);
+        } else {
+          allRows = synthesizeFromBuckets(json);
+        }
+
+        allRows = allRows.map(r => ({
+          age_group: r.age_group ?? r.age ?? r.ageGroup ?? r.age_range ?? '',
+          event: r.event ?? r.event_name ?? r.event_label ?? r.name ?? '',
+          gender: (r.gender ?? r.sex ?? r.gender_label ?? '') + '',
+          count: Number(r.count ?? r.c ?? r.total ?? 0)
+        }));
+
+        applyFiltersToTable();
+      })
+      .catch(err => {
+        console.error('Failed fetching summary', err);
+        setTableError();
+      });
+  }
+
+  function setTableLoading() {
+    const tbody = $('#analysisTable tbody');
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:12px; text-align:center; color:#666;">Loading...</td></tr>';
+  }
+  function setTableError() {
+    const tbody = $('#analysisTable tbody');
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:12px; text-align:center; color:#900;">Failed to load data</td></tr>';
+  }
+
+  function applyFiltersToTable() {
+    const ageFilter = (hdrAge.value || '').trim().toLowerCase();
+    const eventFilter = (hdrEvent.value || '').trim().toLowerCase();
+    const genderFilter = (hdrGender.value || '').trim().toLowerCase();
+
+    visibleRows = allRows.filter(r => {
+      const ageVal = (r.age_group || '').toString().toLowerCase();
+      if (ageFilter) {
+        if (ageFilter.includes('-')) {
+          if (!ageVal.includes(ageFilter)) return false;
+        } else {
+          if (!ageVal.includes(ageFilter)) return false;
+        }
+      }
+
+      if (eventFilter) {
+        if (!(r.event || '').toLowerCase().includes(eventFilter)) return false;
+      }
+      if (genderFilter) {
+        if (!((r.gender || '').toLowerCase().startsWith(genderFilter))) return false;
+      }
+      return true;
+    });
+
+    renderTable(visibleRows);
+  }
+
+  function renderTable(rows) {
+    const tbody = $('#analysisTable tbody');
+    tbody.innerHTML = '';
+    if (!rows || rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding:12px; text-align:center; color:#666;">No data</td></tr>';
+      return;
+    }
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(r.age_group)}</td>
+        <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(r.event)}</td>
+        <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(r.gender)}</td>
+        <td style="border:1px solid #ddd; padding:8px; text-align:right;">${Number(r.count)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function exportVisibleCSV() {
+    if (!visibleRows || visibleRows.length === 0) {
+      alert('No rows to export');
+      return;
+    }
+    const headers = ['Age group','Event','Gender','Count'];
+    const lines = [headers.join(',')];
+    visibleRows.forEach(r => {
+      const row = [
+        csvEscape(r.age_group),
+        csvEscape(r.event),
+        csvEscape(r.gender),
+        r.count
+      ];
+      lines.push(row.join(','));
+    });
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analysis_visible_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function csvEscape(val) {
+    if (val === null || val === undefined) return '';
+    const s = String(val);
+    if (s.includes('"') || s.includes(',') || s.includes('\n')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+
+  function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function synthesizeBreakdown(regs) {
+    const map = {};
+    regs.forEach(r => {
+      const age_group = r.age_group ?? r.age ?? computeAgeGroupFromAge(r.age);
+      const event = r.event_name ?? r.event ?? r.events ?? '';
+      const gender = r.gender ?? r.sex ?? '';
+      const key = `${age_group}||${event}||${gender}`;
+      map[key] = (map[key] || 0) + 1;
+    });
+    return Object.entries(map).map(([k,v]) => {
+      const [age_group, event, gender] = k.split('||');
+      return { age_group, event, gender, count: v };
+    });
+  }
+
+  function synthesizeFromBuckets(json) {
+    if (Array.isArray(json.by_event)) {
+      return json.by_event.map(b => ({ age_group:'', event: b.name ?? b.event ?? '', gender:'', count: b.count ?? b.total ?? 0 }));
+    }
+    if (Array.isArray(json.by_state)) {
+      return json.by_state.map(b => ({ age_group:'', event: b.name ?? '', gender:'', count: b.count ?? 0 }));
+    }
+    return [];
+  }
+
+  function computeAgeGroupFromAge(age) {
+    if (age === null || age === undefined) return '';
+    const a = Number(age);
+    if (isNaN(a)) return '';
+    if (a >= 56) return '56+';
+    if (a >= 46) return '46-55';
+    if (a >= 36) return '36-45';
+    if (a >= 23) return '23-35';
+    if (a >= 19) return '19-22';
+    if (a >= 17) return '17-18';
+    if (a >= 15) return '15-16';
+    if (a >= 12) return '12-14';
+    return '<12';
+  }
+
+  hdrAge.addEventListener('input', debounce(applyFiltersToTable, 200));
+  hdrEvent.addEventListener('change', applyFiltersToTable);
+  hdrGender.addEventListener('change', applyFiltersToTable);
+  refreshBtn.addEventListener('click', fetchSummary);
+  exportVisibleBtn.addEventListener('click', exportVisibleCSV);
+
+  function debounce(fn, wait) {
+    let t;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), wait);
+    };
+  }
+
+  // initial call
+  fetchSummary();
+
+})();
+</script>
+
+{% endblock %}

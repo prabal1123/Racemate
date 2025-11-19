@@ -1,0 +1,129 @@
+{# templates/home.html #}
+{% extends "base.html" %}
+{% load socialaccount %}
+
+{% block title %}Racemate — Home{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h2 class="h2">Welcome to Racemate</h2>
+    <p class="muted">
+      Quick access: register for events, sign in with social providers (if configured),
+      or manage your account.
+    </p>
+
+    {% if request.user.is_authenticated %}
+      <div class="stack-sm">
+        <strong>Hello, {{ request.user.get_full_name|default:request.user.get_username }}</strong>
+        <p class="muted">Use the links above to manage your account. If you are staff, click Admin Dashboard.</p>
+      </div>
+
+      <div class="row gap">
+        <a class="btn" href="{% url 'register' %}">Create a Registration</a>
+        <a class="btn" href="{% url 'socialaccount_connections' %}">Account Connections</a>
+      </div>
+    {% else %}
+      <div class="row gap">
+        <a class="btn" href="{% url 'account_login' %}">Login</a>
+        <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
+        <a class="btn" href="{% url 'register' %}">Go to Registration Page</a>
+      </div>
+
+      {% if available_providers %}
+        <div class="stack-md">
+          <div class="strong">Or sign in with</div>
+          <ul class="provider-list">
+            {% for prov in available_providers %}
+              <li><a class="btn" href="{% provider_login_url prov.id process='login' %}">
+                Sign in with {{ prov.name }}
+              </a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <p class="muted">
+          No social login providers are configured for this site.
+          (To enable Google/GitHub, create a SocialApp in admin and attach it to your Site.)
+        </p>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <section class="card mt">
+    <h3 class="h3">Latest / Quick links</h3>
+    <div class="row gap">
+      <!-- <a class="btn" href="{% url 'register' %}">Register for Event</a> -->
+       <a href="{% url 'accounts:register' %}">Register</a>
+
+      <a class="btn" href="{% url 'account_login' %}">Account Login</a>
+      <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
+    </div>
+  </section>
+{% endblock %}
+
+
+
+
+
+<!-- {# templates/home.html #}
+{% extends "base.html" %}
+{% load socialaccount %}
+
+{% block title %}Racemate — Home{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h2 class="h2">Welcome to Racemate</h2>
+    <p class="muted">
+      Quick access: register for events, sign in with social providers (if configured),
+      or manage your account.
+    </p>
+
+    {% if request.user.is_authenticated %}
+      <div class="stack-sm">
+        <strong>Hello, {{ request.user.get_full_name|default:request.user.get_username }}</strong>
+        <p class="muted">Use the links above to manage your account. If you are staff, click Admin Dashboard.</p>
+      </div>
+
+      <div class="row gap">
+        <a class="btn" href="/register/">Create a Registration</a>
+        <a class="btn" href="{% url 'socialaccount_connections' %}">Account Connections</a>
+      </div>
+    {% else %}
+      <div class="row gap">
+        <a class="btn" href="{% url 'account_login' %}">Login</a>
+        <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
+        <a class="btn" href="/register/">Go to Registration Page</a>
+      </div>
+
+      {% if available_providers %}
+        <div class="stack-md">
+          <div class="strong">Or sign in with</div>
+          <ul class="provider-list">
+            {% for prov in available_providers %}
+              <li><a class="btn" href="{% provider_login_url prov.id process='login' %}">
+                Sign in with {{ prov.name }}
+              </a></li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <p class="muted">
+          No social login providers are configured for this site.
+          (To enable Google/GitHub, create a SocialApp in admin and attach it to your Site.)
+        </p>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <section class="card mt">
+    <h3 class="h3">Latest / Quick links</h3>
+    <div class="row gap">
+      
+       <a href="{% url 'accounts:register' %}">Register</a>
+
+      <a class="btn" href="{% url 'account_login' %}">Account Login</a>
+      <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
+    </div>
+  </section>
+{% endblock %} -->

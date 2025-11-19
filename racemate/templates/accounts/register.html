@@ -1,0 +1,261 @@
+{% load static %}
+{% include 'base.html' %}
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Registration Form</title>
+
+  <style>
+    .form-row { margin-bottom: 0.75rem; }
+    label { display:block; margin-bottom:0.25rem; }
+  </style>
+</head>
+<body> -->
+  <div class="container">
+    <div class="row"> 
+      <div class="col-md-8 offset-md-2">
+        <h2 class="mt-4 mb-3">Event Registration</h2>
+          <h1>Registration Form</h1>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="POST" id="regForm" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="form-row">
+      <label for="{{ form.name.id_for_label }}">Name:</label>
+      {{ form.name }} {{ form.name.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.fathers_name.id_for_label }}">Father's Name:</label>
+      {{ form.fathers_name }} {{ form.fathers_name.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth:</label>
+      {{ form.date_of_birth }} {{ form.date_of_birth.errors }}
+      <small>Choose from calendar (or type YYYY-MM-DD). Future dates are blocked.</small>
+    </div>
+
+  <h1>Registration Form</h1>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="POST" id="regForm" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="form-row">
+      <label for="{{ form.name.id_for_label }}">Name:</label>
+      {{ form.name }} {{ form.name.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.fathers_name.id_for_label }}">Father's Name:</label>
+      {{ form.fathers_name }} {{ form.fathers_name.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth:</label>
+      {{ form.date_of_birth }} {{ form.date_of_birth.errors }}
+      <small>Choose from calendar (or type YYYY-MM-DD). Future dates are blocked.</small>
+    </div>
+
+    <p>
+      Age on event: <strong id="age_display">—</strong>
+      &nbsp;|&nbsp;
+      Predicted category: <strong id="category_display">—</strong>
+    </p>
+
+    <div class="form-row">
+      <label for="{{ form.profession.id_for_label }}">Profession:</label>
+      {{ form.profession }} {{ form.profession.errors }}
+    </div>
+
+    <p>
+      <label for="id_gender">Gender:</label>
+      {{ form.gender }}
+    </p>
+
+    <div class="form-row">
+      <label for="{{ form.address.id_for_label }}">Address:</label>
+      {{ form.address }} {{ form.address.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="id_state">State:</label>
+      <select name="state" id="id_state" data-selected-state="{{ form.state.value|default:'' }}">
+        <option value="">---------</option>
+        {% for s in states %}
+          <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label for="id_district_fk">District:</label>
+      <select name="district_fk" id="id_district_fk" data-selected-district="{{ form.district_fk.value|default:'' }}">
+        <option value="">---------</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.representing_from.id_for_label }}">Representing From:</label>
+      {{ form.representing_from }} {{ form.representing_from.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.mobile_number.id_for_label }}">Mobile Number:</label>
+      {{ form.mobile_number }} {{ form.mobile_number.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.aadhar_number.id_for_label }}">Aadhar Number:</label>
+      {{ form.aadhar_number }} {{ form.aadhar_number.errors }}
+    </div>
+
+    <div class="form-row">
+      <label for="{{ form.events.id_for_label }}">Events:</label>
+      {{ form.events }} {{ form.events.errors }}
+    </div>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <a href="{% url 'accounts:home' %}">Back to Home</a>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // ---------- District loading ----------
+    const stateSelect = document.getElementById('id_state');
+    const districtSelect = document.getElementById('id_district_fk');
+
+    function loadDistricts(stateId, preselectDistrictId) {
+      districtSelect.innerHTML = '<option value="">Loading...</option>';
+      if (!stateId) {
+        districtSelect.innerHTML = '<option value="">---------</option>';
+        return;
+      }
+      const url = "{% url 'accounts:ajax_load_districts' %}?state=" + stateId;
+
+      fetch(url)
+        .then(resp => resp.json())
+        .then(data => {
+          districtSelect.innerHTML = '<option value="">---------</option>';
+          data.districts.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = d.name;
+            if (preselectDistrictId && String(preselectDistrictId) === String(d.id)) {
+              opt.selected = true;
+            }
+            districtSelect.appendChild(opt);
+          });
+        })
+        .catch(err => {
+          console.error('Error loading districts', err);
+          districtSelect.innerHTML = '<option value="">---------</option>';
+        });
+    }
+
+    stateSelect.addEventListener('change', function() {
+      loadDistricts(this.value, null);
+    });
+
+    const preselectedState = stateSelect.getAttribute('data-selected-state');
+    const preselectedDistrict = districtSelect.getAttribute('data-selected-district');
+    if (preselectedState) {
+      stateSelect.value = preselectedState;
+      loadDistricts(preselectedState, preselectedDistrict);
+    }
+
+    // ---------- Flatpickr init ----------
+    const dobInput = document.getElementById('id_date_of_birth');
+    if (dobInput && typeof flatpickr !== 'undefined') {
+      flatpickr(dobInput, {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "F j, Y",
+        allowInput: true,
+        maxDate: "today",
+        minDate: "1950-01-01",
+        monthSelectorType: 'dropdown',
+      });
+    }
+
+    // ---------- Age & Gender-based Category ----------
+    const genderInput = document.getElementById('id_gender');
+    const ageDisplay = document.getElementById('age_display');
+    const categoryDisplay = document.getElementById('category_display');
+    const eventDate = new Date(); // set to your actual event date if needed
+
+    function computeAge(dobString, onDate) {
+      if (!dobString) return null;
+      const d = new Date(dobString);
+      if (isNaN(d)) return null;
+      let years = onDate.getFullYear() - d.getFullYear();
+      if ((onDate.getMonth() < d.getMonth()) || 
+          (onDate.getMonth() === d.getMonth() && onDate.getDate() < d.getDate())) {
+        years--;
+      }
+      return years;
+    }
+
+    function getGenderPrefix() {
+      const g = (genderInput.value || '').toLowerCase();
+      if (g === 'female') return 'Women';
+      if (g === 'male') return 'Men';
+      return 'Participant';
+    }
+
+    function getCategory(age, genderPrefix) {
+      if (age === null) return 'Unspecified';
+      if (age >= 56) return `${genderPrefix} Masters 56+`;
+      if (age >= 46 && age <= 55) return `${genderPrefix} Masters 46–55`;
+      if (age >= 36 && age <= 45) return `${genderPrefix} Masters 36–45`;
+      if (age >= 19 && age <= 22) return `${genderPrefix} under-23 (19–22)`;
+      if (age >= 19) return `${genderPrefix} Elite (19 & above)`;
+      if (age >= 17 && age <= 18) return `${genderPrefix} Junior (17–18)`;
+      if (age >= 15 && age <= 16) return `${genderPrefix} Sub-Junior (15–16)`;
+      if (age >= 12 && age <= 14) return `${genderPrefix} Youth (12–14)`;
+      return 'Other / Not categorized';
+    }
+
+    function updateAgeAndCategory() {
+      const dobVal = dobInput ? dobInput.value : null;
+      const genderPrefix = getGenderPrefix();
+      const age = computeAge(dobVal, eventDate);
+      ageDisplay.textContent = (age === null || isNaN(age)) ? '—' : age;
+      categoryDisplay.textContent = getCategory(age, genderPrefix);
+    }
+
+    if (dobInput) dobInput.addEventListener('change', updateAgeAndCategory);
+    if (genderInput) genderInput.addEventListener('change', updateAgeAndCategory);
+    if (dobInput.value) updateAgeAndCategory();
+  });
+  </script>
+<!-- </body>
+</html> -->

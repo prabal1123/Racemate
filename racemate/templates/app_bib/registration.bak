@@ -1,0 +1,153 @@
+<!-- {% extends "base.html" %}
+{% load humanize %}
+{# templates/app_bib/registration_bib_list.html #}
+
+{% block title %}Bib List — Registrations{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-3">Bib List</h1>
+
+  <form method="get" class="row g-2 mb-3" id="bib-filter-form">
+    <div class="col-auto">
+      {{ filter.form.district_fk.label_tag }}<br>
+      {{ filter.form.district_fk }}
+    </div>
+
+    <div class="col-auto">
+      {{ filter.form.gender.label_tag }}<br>
+      {{ filter.form.gender }}
+    </div>
+
+    <div class="col-auto">
+      {{ filter.form.age_group.label_tag }}<br>
+      {{ filter.form.age_group }}
+    </div>
+
+    <div class="col-auto align-self-end">
+      <button type="submit" class="btn btn-primary">Apply</button>
+      <a href="{% url 'app_bib:registration_bib_list' %}" class="btn btn-outline-secondary">Reset</a>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+      <thead>
+        <tr>
+          <th>
+            {% if current_sort == 'bib_id' %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=-bib_id">Bib ID ▲</a>
+            {% elif current_sort == '-bib_id' %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=bib_id">Bib ID ▼</a>
+            {% else %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=bib_id">Bib ID</a>
+            {% endif %}
+          </th>
+
+          <th>Name</th>
+
+          <th>
+            {% if current_sort == 'district' %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=-district">District ▲</a>
+            {% elif current_sort == '-district' %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=district">District ▼</a>
+            {% else %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=district">District</a>
+            {% endif %}
+          </th>
+
+          <th>
+            {% if current_sort == 'age' %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=-age">Age ▲</a>
+            {% elif current_sort == '-age' %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=age">Age ▼</a>
+            {% else %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=age">Age</a>
+            {% endif %}
+          </th>
+
+          <th>
+            {% if current_sort == 'gender' %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=-gender">Gender ▲</a>
+            {% elif current_sort == '-gender' %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=gender">Gender ▼</a>
+            {% else %}
+              <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}sort=gender">Gender</a>
+            {% endif %}
+          </th>
+
+          <th>Bib Released</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if page_obj.object_list %}
+          {% for reg in page_obj.object_list %}
+            <tr>
+              <td>{{ reg.bib_id|default:"—" }}</td>
+              <td>
+                {% if reg.pk %}
+                  <a href="{% url 'admin:accounts_registration_change' reg.pk %}">{{ reg.name|default:"(no name)" }}</a>
+                {% else %}
+                  {{ reg.name|default:"(no name)" }}
+                {% endif %}
+              </td>
+              <td>{{ reg.district_fk.name|default:reg.district|default:"—" }}</td>
+
+              {# Use the age_display attribute (computed in view) #}
+              <td>{{ reg.age_display }}</td>
+
+              <td>{{ reg.get_gender_display|default:reg.gender|default:"—" }}</td>
+
+              <td>
+                {% if reg.bib_released_at %}
+                  {{ reg.bib_released_at|naturaltime }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted">No registrations found.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">&laquo;</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        {% endif %}
+
+        {% for p in paginator.page_range %}
+          {% if p >= page_obj.number|add:-3 and p <= page_obj.number|add:3 %}
+            {% if p == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link" href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ p }}">{{ p }}</a>
+              </li>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">&raquo;</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %} -->

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Time entry{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+  <h1 class="text-2xl font-semibold mb-4">Time entry</h1>
+
+  {% if messages %}
+    <div>
+      {% for message in messages %}
+        <div class="mb-2">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="card p-4 mb-6">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="mb-2">
+        {{ form.bib_id.label_tag }}<br>
+        {{ form.bib_id }}
+        {% if form.bib_id.errors %} <div class="text-red-600">{{ form.bib_id.errors }}</div> {% endif %}
+      </div>
+
+      <div class="mb-2">
+        {{ form.fields.lap_time_text.label_tag }} <!-- not directly used, so show manual input below -->
+      </div>
+
+      <div class="mb-2">
+        <label for="id_lap_time_text">Lap time (MM:SS or HH:MM:SS or seconds)</label><br>
+        <input type="text" name="lap_time_text" id="id_lap_time_text" class="w-full" placeholder="1:23 or 01:02:03 or 83" value="{{ request.POST.lap_time_text }}">
+        {% if form.non_field_errors %} <div class="text-red-600">{{ form.non_field_errors }}</div> {% endif %}
+        {% if form.errors.lap_time_text %} <div class="text-red-600">{{ form.errors.lap_time_text }}</div> {% endif %}
+      </div>
+
+      <div class="mb-2">
+        {{ form.note.label_tag }}<br>
+        {{ form.note }}
+        {% if form.note.errors %} <div class="text-red-600">{{ form.note.errors }}</div> {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+  </div>
+
+  <h2 class="text-xl font-medium mb-2">Recent entries</h2>
+  <table class="min-w-full table-auto border-collapse">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1">#</th>
+        <th class="border px-2 py-1">Bib</th>
+        <th class="border px-2 py-1">Lap time</th>
+        <th class="border px-2 py-1">Note</th>
+        <th class="border px-2 py-1">Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td class="border px-2 py-1">{{ forloop.counter }}</td>
+        <td class="border px-2 py-1">{{ e.bib_id }}</td>
+        <td class="border px-2 py-1">{{ e.lap_time }}</td>
+        <td class="border px-2 py-1">{{ e.note }}</td>
+        <td class="border px-2 py-1">{{ e.created_at|naturaltime }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="p-2">No entries yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

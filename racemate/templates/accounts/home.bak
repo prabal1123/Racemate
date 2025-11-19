@@ -1,0 +1,83 @@
+{# templates/accounts/home.html #}
+{% extends "base.html" %}
+
+{% load socialaccount %}
+{% load static %}
+
+{% block title %}Racemate — Home{% endblock %}
+
+{% block content %}
+<div class="container">
+  <section class="card">
+    <div class="card-inner">
+      <h2 class="h2">Welcome to Racemate</h2>
+      <p class="muted">
+        Quick access: register for events, sign in with social providers (if configured),
+        or manage your account.
+      </p>
+
+      {% if request.user.is_authenticated %}
+        <div class="stack-sm">
+          <strong>Hello, {{ request.user.get_full_name|default:request.user.get_username }}</strong>
+          <p class="muted">
+            Use the links above to manage your account.
+            If you are staff, click Admin Dashboard.
+          </p>
+        </div>
+
+        <div class="row gap">
+          <a class="btn primary" href="{% url 'accounts:register' %}">Create a Registration</a>
+          <a class="btn" href="{% url 'socialaccount_connections' %}">Account Connections</a>
+          {% if request.user.is_staff %}
+            <a class="btn outline" href="{% url 'analysis_dashboard' %}">Admin Dashboard</a>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="row gap">
+          <a class="btn" href="{% url 'account_login' %}">Login</a>
+          <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
+          <a class="btn" href="{% url 'accounts:register' %}">Go to Registration Page</a>
+        </div>
+
+        {% if available_providers %}
+          <div class="stack-md">
+            <div class="strong">Or sign in with</div>
+            <ul class="provider-list">
+              {% for prov in available_providers %}
+                <li>
+                  <a class="btn social" href="{% provider_login_url prov.id process='login' %}">
+                    Sign in with {{ prov.name }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% else %}
+          <p class="muted">
+            No social login providers are configured for this site.
+            (To enable Google/GitHub, create a SocialApp in admin and attach it to your Site.)
+          </p>
+        {% endif %}
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card mt">
+    <div class="card-inner">
+      <h3 class="h3">Latest / Quick links</h3>
+
+      <div class="grid quick-links">
+        {% for link in links %}
+          <a class="link-card" href="{{ link.href }}">
+            <div class="link-card-inner">
+              <div class="link-title">{{ link.title }}</div>
+              <div class="link-desc">{{ link.description }}</div>
+            </div>
+            <div class="link-arrow">→</div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

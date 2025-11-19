@@ -1,0 +1,29 @@
+{# templates/accounts/home.html #}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Racemate — Home{% endblock %}
+
+
+{% block content %}
+<div class="container mx-auto py-8">
+  <section class="card mb-8">
+    <div class="card-inner p-8">
+      <h1 class="text-4xl font-bold mb-2">Welcome to Racemate</h1>
+      <p class="text-muted mb-6">Quick access: register for events, sign in with social providers (if configured), or manage your account.</p>
+
+      <div class="flex flex-wrap gap-4">
+        <a class="btn primary" href="{% url 'accounts:register' %}">Create a Registration</a>
+        <a class="btn" href="{% url 'socialaccount_connections' %}">Account Connections</a>
+        {% if request.user.is_staff %}
+          <a class="btn outline" href="{% url 'analysis_dashboard' %}">Admin Dashboard</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  {% if quick_links %}
+    {% include "partials/quick_links.html" with quick_links=quick_links arrow_icon=arrow_icon %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+# # accounts/models.py
+# from django.db import models
+# from django.utils.translation import gettext_lazy as _
+# from django.core.validators import RegexValidator
+# from django.core.exceptions import ValidationError
+# from app_admin.models import DimState, DimDistrict
+
+# from datetime import date
+# from django.conf import settings
+
+# phone_validator = RegexValidator(
+#     regex=r'^\+?\d{7,15}$',
+#     message=_("Enter a valid phone number (7-15 digits, optional leading +).")
+# )
+
+# aadhar_validator = RegexValidator(
+#     regex=r'^\d{12}$',
+#     message=_("Aadhaar must be exactly 12 digits.")
+# )
+
+
+# class Registration(models.Model):
+#     PROFESSION_CHOICES = [
+#         ('student', 'Student'),
+#         ('employee', 'Employee'),
+#         ('business', 'Business'),
+#     ]
+
+#     name = models.CharField(_("Full name"), max_length=200)
+#     fathers_name = models.CharField(_("Father's name"), max_length=200, blank=True)
+#     date_of_birth = models.DateField(_("Date of birth"), null=True, blank=True)
+#     profession = models.CharField(_("Profession"), max_length=20, choices=PROFESSION_CHOICES, blank=True)
+#     address = models.TextField(_("Address"), blank=True)
+
+#     # Legacy free-text district (kept for migration/backwards compatibility)
+#     district = models.CharField(
+#         _("District (legacy)"),
+#         max_length=200,
+#         blank=True,
+#         help_text=_("Legacy/free-text district field; used for migration.")
+#     )
+#     GENDER_CHOICES = [
+#     ('male', 'Male'),
+#     ('female', 'Female'),
+#     ('other', 'Other'),
+#     ]
+
+#     gender = models.CharField(
+#     _("Gender"),
+#     max_length=10,
+#     choices=GENDER_CHOICES,
+#     blank=True,
+#     null=True,
+#     )
+#     # Foreign Keys
+#     state = models.ForeignKey(
+#         DimState,
+#         on_delete=models.PROTECT,
+#         null=True,
+#         blank=True,
+#         related_name="registrations",
+#         verbose_name=_("State"),
+#         help_text=_("Selected state (FK to DimState).")
+#     )
+#     district_fk = models.ForeignKey(
+#         DimDistrict,
+#         on_delete=models.PROTECT,
+#         null=True,
+#         blank=True,
+#         related_name="registrations_fk",
+#         verbose_name=_("District"),
+#         help_text=_("Selected district (FK to DimDistrict).")
+#     )
+
+#     representing_from = models.CharField(_("Representing from"), max_length=200, blank=True)
+#     mobile_number = models.CharField(
+#         _("Mobile number"),
+#         max_length=20,
+#         blank=True,
+#         validators=[phone_validator],
+#         help_text=_("Include country code if applicable, e.g. +91XXXXXXXXXX")
+#     )
+#     aadhar_number = models.CharField(
+#         _("Aadhaar"),
+#         max_length=12,
+#         blank=True,
+#         validators=[aadhar_validator],
+#         help_text=_("12 digit Aadhaar number without spaces.")
+#     )
+
+#     # Many-to-Many relation to Event model
+#     events = models.ManyToManyField(
+#         "app_admin.DimEventCategory",
+#         blank=True,
+#         related_name="registrations",
+#         verbose_name=_("Events"),
+#         help_text=_("Events the registrant is participating in.")
+#     )
+
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     # store computed category (nullable so migration is easy)
+#     category = models.CharField(_("Assigned category"), max_length=255, null=True, blank=True,
+#                                 help_text=_("Computed competition category for registrant (auto-calculated)."))
+
+#     class Meta:
+#         ordering = ['-created_at']
+#         verbose_name = _("Registration")
+#         verbose_name_plural = _("Registrations")
+#         indexes = [
+#             models.Index(fields=['mobile_number'], name='reg_mobile_idx'),
+#             models.Index(fields=['aadhar_number'], name='reg_aadhar_idx'),
+#         ]
+
+#     def __str__(self):
+#         return f"{self.name} — {self.mobile_number or 'no-phone'}"
+
+#     def clean(self):
+#         # Ensure aadhar is exactly 12 digits if provided
+#         if self.aadhar_number:
+#             if not self.aadhar_number.isdigit() or len(self.aadhar_number) != 12:
+#                 raise ValidationError({'aadhar_number': _("Aadhaar must be 12 digits.")})
+
+#         # State / District consistency
+#         if self.state and self.district_fk:
+#             if self.district_fk.state_id != self.state.id:
+#                 raise ValidationError(_("Selected district does not belong to selected state."))
+
+#         # Optional: auto-set state from district if state missing but district provided
+#         if not self.state and self.district_fk:
+#             self.state = self.district_fk.state
+
+#     # -------------------
+#     # Age / category helpers
+#     # -------------------
+#     def age_on(self, on_date=None):
+#         """
+#         Compute integer age in years on `on_date` (defaults to today).
+#         Returns None if date_of_birth not set.
+#         """
+#         if not self.date_of_birth:
+#             return None
+#         if on_date is None:
+#             on_date = date.today()
+#         years = on_date.year - self.date_of_birth.year
+#         if (on_date.month, on_date.day) < (self.date_of_birth.month, self.date_of_birth.day):
+#             years -= 1
+#         return years
+
+#     def birth_year(self):
+#         return self.date_of_birth.year if self.date_of_birth else None
+
+#     def assign_category(self, event_date=None):
+#         """
+#         Decide a category string based on age (on event date).
+#         Adjust the ranges to match your official rulebook.
+#         """
+#         if event_date is None:
+#             event_date = getattr(settings, "EVENT_DATE", date.today())
+
+#         age = self.age_on(event_date)
+#         if age is None:
+#             return "Unspecified"
+
+#         # ----- DEFAULT MAPPING (edit to fit exact rules) -----
+#         if age >= 56:
+#             return "Masters Men 56+"
+#         if 46 <= age <= 55:
+#             return "Masters Men 46 to 55 years"
+#         if 36 <= age <= 45:
+#             return "Masters Men 36 to 45 years"
+#         if 12 <= age <= 14:
+#             return "Youth Boys & Youth Girls (12-14)"
+#         if 15 <= age <= 16:
+#             return "Sub-Junior Boys & Sub-Junior Girls (15 & 16)"
+#         if 17 <= age <= 18:
+#             return "Junior Boys & Junior Girls (17 & 18)"
+#         # Under-23 placeholder range; adjust if using birth-year bands
+#         if 19 <= age <= 22:
+#             return "Men under-23 (19-22)"
+#         if age >= 19:
+#             return "Men Elite & Women Elite (19 & above)"
+#         return "Other / Not categorized"
+
+#     def save(self, *args, **kwargs):
+#         # compute category before saving (uses EVENT_DATE from settings by default)
+#         try:
+#             self.category = self.assign_category()
+#         except Exception:
+#             # do not block save for category computation failures
+#             self.category = self.category or None
+#         super().save(*args, **kwargs)
