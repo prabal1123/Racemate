@@ -233,12 +233,31 @@
 
 # racemate/settings.py
 from pathlib import Path
+import os,re
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-nb$is1kj1zfah^9y09$dw$3ghiml3cf8yqs(vbv@7v9ryoyvu+'
-DEBUG = True
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+#DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+
+# DEBUG — temporarily print what the runtime sees (remove after debugging)
+
+print("DEBUG: ENV ALLOWED_HOSTS =", os.environ.get("ALLOWED_HOSTS"))
+print("DEBUG: FINAL ALLOWED_HOSTS =", ALLOWED_HOSTS)
+
+
+env_hosts = os.environ.get("ALLOWED_HOSTS", "")
+if env_hosts:
+    for host in env_hosts.split(","):
+        host = host.strip()
+        if host.startswith("*."):
+            # convert wildcard into regex pattern
+            pattern = r".*\." + re.escape(host[2:]) + r"$"
+            ALLOWED_HOSTS.append(pattern)
+        else:
+            ALLOWED_HOSTS.append(host)
 
 # Safe detection of whitenoise so we don't error if package isn't installed
 try:
