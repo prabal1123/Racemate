@@ -1,13 +1,16 @@
-# Web framework
-Django==5.2.7
 asgiref==3.10.0
+certifi==2025.10.5
+cffi==2.0.0
+charset-normalizer==3.4.4
+cryptography==46.0.3
+Django==5.2.7
+django-allauth==65.13.0
+django-environ==0.12.0
 django-filter==25.2
+idna==3.11
+jwt==1.4.0
+pycparser==2.23
+requests==2.32.5
 sqlparse==0.5.3
-
-# Vercel + static serving
-vercel-wsgi==0.8.0
-whitenoise==6.5.0
-
-# DB drivers: uncomment as needed
-# psycopg2-binary==2.9.7
-# mysqlclient==2.1.1
+urllib3==2.5.0
+whitenoise==6.11.0
