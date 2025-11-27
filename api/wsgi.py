@@ -1,58 +1,63 @@
-# api/wsgi.py — robust WSGI handler for Vercel (auto-detects package name and sets sys.path)
+# api/wsgi.py — autodetect settings module (handles nested package structures)
 import os
 import sys
 import traceback
 from pathlib import Path
+import importlib
 
-# Ensure repo root (one level up from api/) is on sys.path
+# Ensure repo root (one level above api/) is on sys.path
 ROOT = Path(__file__).resolve().parent.parent
 root_str = str(ROOT)
 if root_str not in sys.path:
     sys.path.insert(0, root_str)
 
-# Helpful debug — Vercel will capture stdout
 print("DEBUG: api/wsgi.py running. sys.path[0] =", sys.path[0])
 print("DEBUG: files at project root:", sorted(p.name for p in ROOT.iterdir()))
 
-# Try candidate package names (lowercase and Capitalized)
-CANDIDATES = ["racemate", "Racemate"]
-found = None
-for pkg in CANDIDATES:
+# Find all settings.py files under the repo root (skip venv, .git, __pycache__, _vendor, api)
+candidates = []
+for p in ROOT.rglob("settings.py"):
+    # ignore settings in env/ or .venv or _vendor or api
+    parts = str(p).split(os.sep)
+    if any(x in parts for x in ("env", ".venv", "_vendor", "api", "__pycache__")):
+        continue
+    # build module path from relative path: e.g. racemate/racemate/settings.py -> racemate.racemate.settings
+    rel = p.relative_to(ROOT).with_suffix("")  # e.g. racemate/racemate/settings
+    module_path = ".".join(rel.parts)
+    candidates.append(module_path)
+
+print("DEBUG: discovered candidate settings modules:", candidates)
+
+found_settings = None
+for module_path in candidates:
     try:
-        __import__(pkg)
-        found = pkg
+        importlib.import_module(module_path)
+        # ensure it's actually a module we can import (it might import but fail later)
+        found_settings = module_path
+        print("DEBUG: successful import of settings module:", module_path)
         break
-    except Exception:
-        # ignore import error here — we'll report if none found
-        pass
+    except Exception as exc:
+        print(f"DEBUG: candidate {module_path} rejected: {exc!r}")
 
-if not found:
-    print("ERROR: Could not import any candidate package names:", CANDIDATES)
-    print("Make sure your Django project package folder (contains settings.py) is committed to the repo.")
-    # Show directory listing for debugging
-    try:
-        for p in ROOT.iterdir():
-            print(" -", p.name)
-    except Exception:
-        pass
-    # Raise to produce an error in logs
-    raise ImportError(f"Could not find project package. Expected one of: {CANDIDATES}")
+if not found_settings:
+    raise ImportError(
+        "Unable to locate an importable settings module. "
+        "Searched these candidates: " + ", ".join(candidates)
+    )
 
-# Use discovered package name for settings
-settings_module = f"{found}.settings"
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
-print(f"DEBUG: Using settings module: {settings_module}")
+# Set the discovered settings module
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", found_settings)
+print("DEBUG: Using DJANGO_SETTINGS_MODULE =", found_settings)
 
-# Import and create WSGI app
+# Create WSGI application
 try:
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
 except Exception:
-    print("ERROR: Exception while initializing Django WSGI application:")
+    print("ERROR: exception while initializing Django WSGI application:")
     traceback.print_exc()
     raise
 
-# Minimal handler Vercel expects
+# Expose handler expected by Vercel
 def handler(event, context):
-    # this wrapper exists so Vercel can call `handler`
     return application(event, context)
