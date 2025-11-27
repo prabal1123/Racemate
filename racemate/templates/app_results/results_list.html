@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
-{# Page title (replace block name if your base uses a different one) #}
 {% block title %}Results / Participation{% endblock %}
 
-{# Extra CSS for this page (common block name is extra_css or head_extra — change if your base differs) #}
 {% block extra_css %}
 <link href="{% static 'css/base.css' %}" rel="stylesheet">
 <style>
@@ -16,174 +14,74 @@
 </style>
 {% endblock %}
 
-{# Main page content - most base templates use a block named content or body #}
 {% block content %}
   <h1>Results / Participation</h1>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Rider</th>
-        <th>Bib</th>
-        <th>Age group</th>
-        <th>Gender</th>
-        <th>Total Lap Time</th>
-        <th>End Time</th>
-        <th>Participated</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for entry in entries %}
-      <tr data-start-id="{{ entry.pk }}">
-        <td>{{ entry.name }}</td>
-        <td>{{ entry.bib_id }}</td>
-        <td class="age_group_cell">{% if entry.participation %}{{ entry.participation.age_group }}{% endif %}</td>
-        <td class="gender_cell">{% if entry.participation %}{{ entry.participation.gender }}{% else %}{{ entry.gender }}{% endif %}</td>
-        <td class="lap_time_cell">
-          {% if entry.total_lap_time %}
-            {{ entry.total_lap_time }}
-          {% else %}
-            -
-          {% endif %}
-        </td>
-        <td class="end_time_cell">{% if entry.participation %}{{ entry.participation.end_time }}{% endif %}</td>
-        <td>
-          <input class="is-participated-checkbox" type="checkbox" {% if entry.participation and entry.participation.is_participated %}checked{% endif %} />
-        </td>
-        <td><button class="edit-btn">Edit</button></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <!-- pass the url template for the update view to JS using a data-attribute -->
+  <div id="page" data-update-url-template="{% url 'app_results:update' 0 %}">
+    <table>
+      <thead>
+        <tr>
+          <th>Rider</th>
+          <th>Bib</th>
+          <th>Age group</th>
+          <th>Gender</th>
+          <th>Total Lap Time</th>
+          <th>End Time</th>
+          <th>Participated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr data-start-id="{{ entry.pk }}">
+          <td>{{ entry.name }}</td>
+          <td>{{ entry.bib_id }}</td>
+          <td class="age_group_cell">{% if entry.participation %}{{ entry.participation.age_group }}{% endif %}</td>
+          <td class="gender_cell">{% if entry.participation %}{{ entry.participation.gender }}{% else %}{{ entry.gender }}{% endif %}</td>
+          <td class="lap_time_cell">
+            {% if entry.total_lap_time %}
+              {{ entry.total_lap_time }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="end_time_cell">{% if entry.participation %}{{ entry.participation.end_time }}{% endif %}</td>
+          <td>
+            <input class="is-participated-checkbox" type="checkbox" {% if entry.participation and entry.participation.is_participated %}checked{% endif %} />
+          </td>
+          <td><button class="edit-btn">Edit</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
-  <!-- Modal -->
-  <div id="editModal" class="modal" aria-hidden="true">
-    <div class="panel">
-      <h3>Edit Participation</h3>
-      <form id="participationForm">
-        <input type="hidden" id="startEntryId">
-        <label>Age group<br><input id="f_age_group"></label><br>
-        <label>Gender<br>
-          <select id="f_gender">
-            <option value=""></option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-        </label><br>
-        <label>Total lap time (seconds)<br><input id="f_total_lap_time_seconds" type="number" /></label><br>
-        <label>End time (ISO)<br><input id="f_end_time" placeholder="YYYY-MM-DDThh:mm:ss" /></label><br><br>
-        <button type="submit">Save</button>
-        <button type="button" id="modalClose">Cancel</button>
-      </form>
+    <!-- Modal -->
+    <div id="editModal" class="modal" aria-hidden="true">
+      <div class="panel">
+        <h3>Edit Participation</h3>
+        <form id="participationForm">
+          <input type="hidden" id="startEntryId">
+          <label>Age group<br><input id="f_age_group"></label><br>
+          <label>Gender<br>
+            <select id="f_gender">
+              <option value=""></option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </label><br>
+          <label>Total lap time (seconds)<br><input id="f_total_lap_time_seconds" type="number" /></label><br>
+          <label>End time (ISO)<br><input id="f_end_time" placeholder="YYYY-MM-DDThh:mm:ss" /></label><br><br>
+          <button type="submit">Save</button>
+          <button type="button" id="modalClose">Cancel</button>
+        </form>
+      </div>
     </div>
   </div>
 {% endblock %}
 
-{# Extra JS for this page (common block name is extra_js, scripts or footer_js) #}
 {% block extra_js %}
-<script>
-(function(){
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i=0;i<cookies.length;i++){
-        const c = cookies[i].trim();
-        if (c.substring(0, name.length+1) === (name + '=')) {
-          cookieValue = decodeURIComponent(c.substring(name.length+1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-  const csrftoken = getCookie('csrftoken');
-
-  function formatSeconds(val){
-    val = Number(val);
-    if (!val) return '-';
-    const h = Math.floor(val/3600);
-    const m = Math.floor((val%3600)/60);
-    const s = Math.floor(val%60);
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  }
-
-  document.querySelectorAll('.is-participated-checkbox').forEach(cb=>{
-    cb.addEventListener('change', async e=>{
-      const tr = e.target.closest('tr');
-      const startId = tr.dataset.startId;
-      const checked = e.target.checked;
-      const url = `{% url 'app_results:update' 0 %}`.replace('/0/', `/${startId}/`);
-      const payload = { is_participated: checked };
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error('failed');
-      } catch(err){
-        alert('Failed to update participation');
-        e.target.checked = !checked;
-      }
-    });
-  });
-
-  const modal = document.getElementById('editModal');
-  const form = document.getElementById('participationForm');
-  document.querySelectorAll('.edit-btn').forEach(b=>{
-    b.addEventListener('click', e=>{
-      const tr = e.target.closest('tr');
-      const startId = tr.dataset.startId;
-      document.getElementById('startEntryId').value = startId;
-      document.getElementById('f_age_group').value = tr.querySelector('.age_group_cell').innerText.trim();
-      document.getElementById('f_gender').value = tr.querySelector('.gender_cell').innerText.trim();
-      document.getElementById('f_total_lap_time_seconds').value = "";
-      document.getElementById('f_end_time').value = tr.querySelector('.end_time_cell').innerText.trim();
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden','false');
-    });
-  });
-
-  document.getElementById('modalClose').addEventListener('click', ()=>{
-    modal.classList.remove('open');
-    modal.setAttribute('aria-hidden','true');
-  });
-
-  form.addEventListener('submit', async e=>{
-    e.preventDefault();
-    const startId = document.getElementById('startEntryId').value;
-    const payload = {
-      age_group: document.getElementById('f_age_group').value,
-      gender: document.getElementById('f_gender').value,
-      total_lap_time_seconds: document.getElementById('f_total_lap_time_seconds').value || null,
-      end_time: document.getElementById('f_end_time').value || null
-    };
-    const url = `{% url 'app_results:update' 0 %}`.replace('/0/', `/${startId}/`);
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error('save failed');
-
-      const tr = document.querySelector(`tr[data-start-id='${startId}']`);
-      tr.querySelector('.age_group_cell').innerText = payload.age_group || "";
-      tr.querySelector('.gender_cell').innerText = payload.gender || "";
-      tr.querySelector('.lap_time_cell').innerText = payload.total_lap_time_seconds ? formatSeconds(payload.total_lap_time_seconds) : tr.querySelector('.lap_time_cell').innerText;
-      tr.querySelector('.end_time_cell').innerText = payload.end_time || "";
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden','true');
-    } catch(err){
-      alert('Failed to save participation');
-    }
-  });
-
-})();
-</script>
+  <!-- external JS file -->
+  <script src="{% static 'js/participation.js' %}"></script>
 {% endblock %}
