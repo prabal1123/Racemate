@@ -1,91 +1,49 @@
-# api/wsgi.py — robust final autodetect for Vercel (handles nested racemate/racemate layouts)
+# api/wsgi.py — minimal, canonical WSGI application for Vercel
 import os
 import sys
-import traceback
 from pathlib import Path
-import importlib
 
+# Ensure repo root is on sys.path (one level above api/)
 ROOT = Path(__file__).resolve().parent.parent
-root_str = str(ROOT)
-if root_str not in sys.path:
-    sys.path.insert(0, root_str)
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-# Also add outer 'racemate' folder (if exists) so top-level app imports work
+# If you have an outer directory with apps (repo_root/racemate/*), add that too
 outer_racemate = ROOT / "racemate"
 if outer_racemate.exists() and str(outer_racemate) not in sys.path:
     sys.path.insert(0, str(outer_racemate))
 
-print("DEBUG: api/wsgi.py running. sys.path[0] =", sys.path[0])
-print("DEBUG: sys.path[:4] =", sys.path[:4])
-print("DEBUG: files at project root:", sorted(p.name for p in ROOT.iterdir()))
-print("DEBUG: outer_racemate on sys.path:", str(outer_racemate) in sys.path)
-
-# Build a list of candidate settings module names to try, in priority order.
-# 1) Typical when sys.path[0] is repo root and package is racemate/: "racemate.settings"
-# 2) If nested racemate/racemate exists and sys.path[0] is repo root: "racemate.racemate.settings"
-# 3) If sys.path[0] is inner racemate, "racemate.settings" will succeed
-# 4) Try discovered file-based modules adjusted for current sys.path
+# Discover settings module: try common names, falling back to file scan
 candidates = [
     "racemate.settings",
     "racemate.racemate.settings",
     "settings",
 ]
 
-# Add discovered settings.py paths (converted to module paths)
-discovered = []
+# Add discovered file-based candidates
+from pathlib import Path as _P
 for p in ROOT.rglob("settings.py"):
-    parts = p.relative_to(ROOT).with_suffix("").parts  # e.g. ('racemate','racemate','settings')
-    full = ".".join(parts)
-    discovered.append(full)
-    # also try trimmed imports by removing leading folder if sys.path[0] is inside that folder
-    # e.g. if full == "racemate.racemate.settings" and sys.path[0] endswith "/racemate",
-    # try "racemate.settings"
-    candidates.append(full)
+    rel = p.relative_to(ROOT).with_suffix("")
+    candidates.append(".".join(rel.parts))
 
-print("DEBUG: discovered settings modules from files:", discovered)
-print("DEBUG: candidates initial:", candidates)
-
-found = None
-for mod in candidates:
+# Set first importable candidate
+import importlib
+chosen = None
+for cand in candidates:
     try:
-        importlib.import_module(mod)
-        found = mod
-        print("DEBUG: successful import of settings module:", mod)
+        importlib.import_module(cand)
+        chosen = cand
         break
-    except Exception as exc:
-        print(f"DEBUG: candidate {mod} rejected: {exc!r}")
+    except Exception:
+        continue
 
-# Final attempt: try trimming the first segment of discovered modules (handle inner-folder sys.path)
-if not found:
-    for full in discovered:
-        parts = full.split(".")
-        if len(parts) > 2:
-            # try removing the first segment (e.g. "racemate.racemate.settings" -> "racemate.settings")
-            trimmed = ".".join(parts[1:])
-            try:
-                importlib.import_module(trimmed)
-                found = trimmed
-                print("DEBUG: successful import of trimmed settings module:", trimmed)
-                break
-            except Exception as exc:
-                print(f"DEBUG: trimmed candidate {trimmed} rejected: {exc!r}")
+if chosen is None:
+    raise ImportError("Could not determine DJANGO_SETTINGS_MODULE from candidates: " + ", ".join(candidates))
 
-if not found:
-    raise ImportError(
-        "Unable to locate an importable settings module. Tried candidates: "
-        + ", ".join(candidates + discovered)
-    )
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", chosen)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", found)
-print("DEBUG: Using DJANGO_SETTINGS_MODULE =", found)
+# Create the standard WSGI application object
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
 
-try:
-    from django.core.wsgi import get_wsgi_application
-    application = get_wsgi_application()
-except Exception:
-    print("ERROR: exception while initializing Django WSGI application:")
-    traceback.print_exc()
-    raise
-
-def handler(event, context):
-    return application(event, context)
+# Do NOT export any other objects named 'handler' or similar — leave only 'application'
