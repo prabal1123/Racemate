@@ -1,27 +1,33 @@
-# api/wsgi.py — autodetect settings module (handles nested package structures)
+# api/wsgi.py — add outer racemate folder to sys.path so app imports like "accounts" work
 import os
 import sys
 import traceback
 from pathlib import Path
 import importlib
 
-# Ensure repo root (one level above api/) is on sys.path
+# Put repo root on sys.path (one level above api/)
 ROOT = Path(__file__).resolve().parent.parent
 root_str = str(ROOT)
 if root_str not in sys.path:
     sys.path.insert(0, root_str)
 
-print("DEBUG: api/wsgi.py running. sys.path[0] =", sys.path[0])
-print("DEBUG: files at project root:", sorted(p.name for p in ROOT.iterdir()))
+# Also add the outer 'racemate' directory (if it exists) to sys.path.
+# This handles the nested layout: repo-root/racemate/<app folders and inner racemate package>.
+outer_racemate = ROOT / "racemate"
+if outer_racemate.exists() and str(outer_racemate) not in sys.path:
+    sys.path.insert(0, str(outer_racemate))
 
-# Find all settings.py files under the repo root (skip venv, .git, __pycache__, _vendor, api)
+print("DEBUG: api/wsgi.py running. sys.path[0] =", sys.path[0])
+print("DEBUG: sys.path[:4] =", sys.path[:4])
+print("DEBUG: files at project root:", sorted(p.name for p in ROOT.iterdir()))
+print("DEBUG: outer_racemate on sys.path:", str(outer_racemate) in sys.path)
+
+# Find settings.py modules
 candidates = []
 for p in ROOT.rglob("settings.py"):
-    # ignore settings in env/ or .venv or _vendor or api
     parts = str(p).split(os.sep)
     if any(x in parts for x in ("env", ".venv", "_vendor", "api", "__pycache__")):
         continue
-    # build module path from relative path: e.g. racemate/racemate/settings.py -> racemate.racemate.settings
     rel = p.relative_to(ROOT).with_suffix("")  # e.g. racemate/racemate/settings
     module_path = ".".join(rel.parts)
     candidates.append(module_path)
@@ -32,7 +38,6 @@ found_settings = None
 for module_path in candidates:
     try:
         importlib.import_module(module_path)
-        # ensure it's actually a module we can import (it might import but fail later)
         found_settings = module_path
         print("DEBUG: successful import of settings module:", module_path)
         break
@@ -41,15 +46,13 @@ for module_path in candidates:
 
 if not found_settings:
     raise ImportError(
-        "Unable to locate an importable settings module. "
-        "Searched these candidates: " + ", ".join(candidates)
+        "Unable to locate an importable settings module. Searched: " + ", ".join(candidates)
     )
 
-# Set the discovered settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", found_settings)
 print("DEBUG: Using DJANGO_SETTINGS_MODULE =", found_settings)
 
-# Create WSGI application
+# Initialize WSGI app
 try:
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
@@ -58,6 +61,5 @@ except Exception:
     traceback.print_exc()
     raise
 
-# Expose handler expected by Vercel
 def handler(event, context):
     return application(event, context)
