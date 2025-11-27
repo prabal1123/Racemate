@@ -1,7 +1,13 @@
 {
-  "version": 2,
+  "functions": {
+    "api/wsgi.py": {
+      "runtime": "python3.11",
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "routes": [
-    { "src": "/static/(.*)", "dest": "/static/$1" },
+    { "src": "/api/wsgi", "dest": "/api/wsgi.py" },
     { "src": "/(.*)", "dest": "/api/wsgi.py" }
   ]
 }
