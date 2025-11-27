@@ -1,18 +1,16 @@
-# api/wsgi.py — add outer racemate folder to sys.path so app imports like "accounts" work
+# api/wsgi.py — robust final autodetect for Vercel (handles nested racemate/racemate layouts)
 import os
 import sys
 import traceback
 from pathlib import Path
 import importlib
 
-# Put repo root on sys.path (one level above api/)
 ROOT = Path(__file__).resolve().parent.parent
 root_str = str(ROOT)
 if root_str not in sys.path:
     sys.path.insert(0, root_str)
 
-# Also add the outer 'racemate' directory (if it exists) to sys.path.
-# This handles the nested layout: repo-root/racemate/<app folders and inner racemate package>.
+# Also add outer 'racemate' folder (if exists) so top-level app imports work
 outer_racemate = ROOT / "racemate"
 if outer_racemate.exists() and str(outer_racemate) not in sys.path:
     sys.path.insert(0, str(outer_racemate))
@@ -22,37 +20,65 @@ print("DEBUG: sys.path[:4] =", sys.path[:4])
 print("DEBUG: files at project root:", sorted(p.name for p in ROOT.iterdir()))
 print("DEBUG: outer_racemate on sys.path:", str(outer_racemate) in sys.path)
 
-# Find settings.py modules
-candidates = []
+# Build a list of candidate settings module names to try, in priority order.
+# 1) Typical when sys.path[0] is repo root and package is racemate/: "racemate.settings"
+# 2) If nested racemate/racemate exists and sys.path[0] is repo root: "racemate.racemate.settings"
+# 3) If sys.path[0] is inner racemate, "racemate.settings" will succeed
+# 4) Try discovered file-based modules adjusted for current sys.path
+candidates = [
+    "racemate.settings",
+    "racemate.racemate.settings",
+    "settings",
+]
+
+# Add discovered settings.py paths (converted to module paths)
+discovered = []
 for p in ROOT.rglob("settings.py"):
-    parts = str(p).split(os.sep)
-    if any(x in parts for x in ("env", ".venv", "_vendor", "api", "__pycache__")):
-        continue
-    rel = p.relative_to(ROOT).with_suffix("")  # e.g. racemate/racemate/settings
-    module_path = ".".join(rel.parts)
-    candidates.append(module_path)
+    parts = p.relative_to(ROOT).with_suffix("").parts  # e.g. ('racemate','racemate','settings')
+    full = ".".join(parts)
+    discovered.append(full)
+    # also try trimmed imports by removing leading folder if sys.path[0] is inside that folder
+    # e.g. if full == "racemate.racemate.settings" and sys.path[0] endswith "/racemate",
+    # try "racemate.settings"
+    candidates.append(full)
 
-print("DEBUG: discovered candidate settings modules:", candidates)
+print("DEBUG: discovered settings modules from files:", discovered)
+print("DEBUG: candidates initial:", candidates)
 
-found_settings = None
-for module_path in candidates:
+found = None
+for mod in candidates:
     try:
-        importlib.import_module(module_path)
-        found_settings = module_path
-        print("DEBUG: successful import of settings module:", module_path)
+        importlib.import_module(mod)
+        found = mod
+        print("DEBUG: successful import of settings module:", mod)
         break
     except Exception as exc:
-        print(f"DEBUG: candidate {module_path} rejected: {exc!r}")
+        print(f"DEBUG: candidate {mod} rejected: {exc!r}")
 
-if not found_settings:
+# Final attempt: try trimming the first segment of discovered modules (handle inner-folder sys.path)
+if not found:
+    for full in discovered:
+        parts = full.split(".")
+        if len(parts) > 2:
+            # try removing the first segment (e.g. "racemate.racemate.settings" -> "racemate.settings")
+            trimmed = ".".join(parts[1:])
+            try:
+                importlib.import_module(trimmed)
+                found = trimmed
+                print("DEBUG: successful import of trimmed settings module:", trimmed)
+                break
+            except Exception as exc:
+                print(f"DEBUG: trimmed candidate {trimmed} rejected: {exc!r}")
+
+if not found:
     raise ImportError(
-        "Unable to locate an importable settings module. Searched: " + ", ".join(candidates)
+        "Unable to locate an importable settings module. Tried candidates: "
+        + ", ".join(candidates + discovered)
     )
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", found_settings)
-print("DEBUG: Using DJANGO_SETTINGS_MODULE =", found_settings)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", found)
+print("DEBUG: Using DJANGO_SETTINGS_MODULE =", found)
 
-# Initialize WSGI app
 try:
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
