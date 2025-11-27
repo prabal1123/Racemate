@@ -1,49 +1,87 @@
-# api/wsgi.py — minimal, canonical WSGI application for Vercel
+# api/wsgi.py — robust autodiscovery + export `app` for Vercel
 import os
 import sys
+import traceback
 from pathlib import Path
+import importlib
 
-# Ensure repo root is on sys.path (one level above api/)
+# Ensure repo root on sys.path (one level above api/)
 ROOT = Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+root_str = str(ROOT)
+if root_str not in sys.path:
+    sys.path.insert(0, root_str)
 
-# If you have an outer directory with apps (repo_root/racemate/*), add that too
+# Also add outer racemate folder to sys.path if present (handles nested layouts)
 outer_racemate = ROOT / "racemate"
 if outer_racemate.exists() and str(outer_racemate) not in sys.path:
     sys.path.insert(0, str(outer_racemate))
 
-# Discover settings module: try common names, falling back to file scan
+# --- DEBUG (optional, useful in Vercel logs) ---
+print("DEBUG: api/wsgi.py running. sys.path[0] =", sys.path[0])
+print("DEBUG: sys.path[:4] =", sys.path[:4])
+print("DEBUG: files at project root:", sorted(p.name for p in ROOT.iterdir()))
+# --- end debug ---
+
+# Build candidate settings names
 candidates = [
     "racemate.settings",
     "racemate.racemate.settings",
     "settings",
 ]
 
-# Add discovered file-based candidates
-from pathlib import Path as _P
+discovered = []
 for p in ROOT.rglob("settings.py"):
     rel = p.relative_to(ROOT).with_suffix("")
-    candidates.append(".".join(rel.parts))
+    full = ".".join(rel.parts)
+    discovered.append(full)
+    candidates.append(full)
 
-# Set first importable candidate
-import importlib
-chosen = None
-for cand in candidates:
+print("DEBUG: discovered settings modules:", discovered)
+print("DEBUG: candidates initial:", candidates)
+
+# Try to import a candidate settings module
+found = None
+for mod in candidates:
     try:
-        importlib.import_module(cand)
-        chosen = cand
+        importlib.import_module(mod)
+        found = mod
+        print("DEBUG: successful import of settings module:", mod)
         break
-    except Exception:
-        continue
+    except Exception as exc:
+        print(f"DEBUG: candidate {mod} rejected: {exc!r}")
 
-if chosen is None:
-    raise ImportError("Could not determine DJANGO_SETTINGS_MODULE from candidates: " + ", ".join(candidates))
+# Try trimmed discovered candidates if necessary
+if not found:
+    for full in discovered:
+        parts = full.split(".")
+        if len(parts) > 2:
+            trimmed = ".".join(parts[1:])
+            try:
+                importlib.import_module(trimmed)
+                found = trimmed
+                print("DEBUG: successful import of trimmed settings module:", trimmed)
+                break
+            except Exception as exc:
+                print(f"DEBUG: trimmed candidate {trimmed} rejected: {exc!r}")
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", chosen)
+if not found:
+    raise ImportError(
+        "Unable to locate an importable settings module. Tried: " + ", ".join(candidates + discovered)
+    )
+
+# Set the discovered settings module
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", found)
+print("DEBUG: Using DJANGO_SETTINGS_MODULE =", found)
 
 # Create the standard WSGI application object
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+try:
+    from django.core.wsgi import get_wsgi_application
+    application = get_wsgi_application()
+except Exception:
+    print("ERROR: exception while initializing Django WSGI application:")
+    traceback.print_exc()
+    raise
 
-# Do NOT export any other objects named 'handler' or similar — leave only 'application'
+# Export the WSGI callable as `app` for Vercel to use.
+# Also keep `application` (standard) for Django tools.
+app = application
