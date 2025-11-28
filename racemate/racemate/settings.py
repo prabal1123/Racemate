@@ -1,4 +1,3 @@
-
 # racemate/settings.py
 from pathlib import Path
 
@@ -6,8 +5,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-nb$is1kj1zfah^9y09$dw$3ghiml3cf8yqs(vbv@7v9ryoyvu+'
 DEBUG = True
-#ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-ALLOWED_HOSTS = ["127.0.0.1", "localhost","racemate-silk.vercel.app", "racemate-j57dwy1q0-prabal1123s-projects.vercel.app", "*"]
+
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "racemate-silk.vercel.app",
+    "racemate-j57dwy1q0-prabal1123s-projects.vercel.app",
+    "*",
+]
+
 SITE_ID = 1
 
 INSTALLED_APPS = [
@@ -20,22 +26,23 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.humanize',
 
+    # project apps
     'accounts',
     'app_admin',
     'app_bib',
     'django_filters',
     'app_results',
-    
 
+    # auth/social
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-     
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',            # serve static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -84,7 +91,6 @@ ACCOUNT_USERNAME_REQUIRED = True
 LOGIN_REDIRECT_URL = 'login'
 LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-# ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_SESSION_REMEMBER = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -102,8 +108,29 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# -------------------------
+# Static files
+# -------------------------
+# URL to use when referring to static files
+STATIC_URL = "/static/"
+
+# Where collectstatic will collect static files for deployment (Vercel build uses this)
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Where your source static files live (so collectstatic can find them)
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# Use a simple storage backend during build to avoid remote/storage-related failures.
+# You can switch to a manifest/whitenoise storage later if you want cache-busted filenames.
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
+# -------------------------
+# Media files (optional)
+# -------------------------
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "mediafiles"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
