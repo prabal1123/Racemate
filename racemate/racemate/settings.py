@@ -33,11 +33,11 @@ INSTALLED_APPS = [
     # 'django_filters',
     # 'app_results',
 
-    'racemate.accounts',
-    'racemate.app_admin',
-    'racemate.app_bib',
-    'racemate.app_results',
-    'racemate.pages',
+    'accounts',
+    'app_admin',
+    'app_bib',
+    'app_results',
+    'pages',
 
     # auth/social
     'allauth',
