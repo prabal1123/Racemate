@@ -1,21 +1,17 @@
-# racemate/settings.py
+# racemate/racemate/settings.py
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-nb$is1kj1zfah^9y09$dw$3ghiml3cf8yqs(vbv@7v9ryoyvu+'
-DEBUG = True
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-nb$is1kj1zfah^9y09$dw$3ghiml3cf8yqs(vbv@7v9ryoyvu+")
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "racemate-silk.vercel.app",
-    "racemate-j57dwy1q0-prabal1123s-projects.vercel.app",
-    "*",
-]
+ALLOWED_HOSTS = ["*"]
 
 SITE_ID = 1
 
+# ======================== APPS – THIS WORKS EVERYWHERE ========================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -26,20 +22,14 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.humanize',
 
-    # project apps
-    # 'accounts',
-    # 'app_admin',
-    # 'app_bib',
-    # 'django_filters',
-    # 'app_results',
-
+    # Your apps – use the simple name (Django auto-detects them because they are in racemate/)
     'accounts',
     'app_admin',
     'app_bib',
     'app_results',
     'pages',
+    'django_filters',
 
-    # auth/social
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -48,14 +38,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',            # serve static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'racemate.urls'
@@ -85,67 +75,39 @@ DATABASES = {
     }
 }
 
+# allauth
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_USERNAME_REQUIRED = True
-LOGIN_REDIRECT_URL = 'login'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-ACCOUNT_SESSION_REMEMBER = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'webmaster@localhost'
-
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
-]
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# -------------------------
-# Static files
-# -------------------------
-# URL to use when referring to static files
-STATIC_URL = "/static/"
-
-# Where collectstatic will collect static files for deployment (Vercel build uses this)
-
-#STATIC_ROOT = BASE_DIR / "staticfiles"
-# Static files
-
+# ======================== STATIC FILES – WORKS LOCALLY & VER CEL ========================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [str(BASE_DIR.parent / "static")]
-# Where your source static files live (so collectstatic can find them)
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
 
-# Use a simple storage backend during build to avoid remote/storage-related failures.
-# You can switch to a manifest/whitenoise storage later if you want cache-busted filenames.
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+# This line works both locally and on Vercel (your static/ folder is at project root)
+STATICFILES_DIRS = [BASE_DIR.parent / 'static']
 
-# -------------------------
-# Media files (optional)
-# -------------------------
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "mediafiles"
+# Whitenoise with compression & cache-busting
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'mediafiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
 
 # # racemate/settings.py
 # from pathlib import Path
