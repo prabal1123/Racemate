@@ -1,37 +1,45 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== Racemate Vercel Build – FINAL WORKING VERSION ==="
+echo "=== Racemate – FINAL WORKING Vercel build ==="
 cd /vercel/path0
 
 # Install deps
-python -m pip install --upgrade pip > /dev/null 2>&1
-python -m pip install -r requirements.txt > /dev/null 2>&1
+python -m pip install --upgrade pip -q
+python -m pip install -r requirements.txt -q
 
-# THIS LINE IS THE KEY – must include the project root first
+# THIS LINE IS THE ONLY ONE THAT WORKS FOR YOUR STRUCTURE
 export PYTHONPATH="/vercel/path0:${PYTHONPATH:-}"
-
 export DJANGO_SETTINGS_MODULE="racemate.racemate.settings"
 
-echo "PYTHONPATH = $PYTHONPATH"
-echo "Settings = $DJANGO_SETTINGS_MODULE"
+echo "PYTHONPATH=$PYTHONPATH"
+echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
 
-# Test that your top-level apps are importable
-python -c "
-import sys
-print('sys.path[0]:', sys.path[0])
+# Proof that the apps are now visible
+python - <<'PY'
+import sys, os
+print("sys.path[0] =", sys.path[0])
+print("Current dir =", os.getcwd())
+print("Contents:", os.listdir('.'))
+
 import accounts
 import app_admin
 import app_bib
 import app_results
-print('All 4 top-level apps imported successfully!')
-" || exit 1
+print("SUCCESS: All four top-level apps imported!")
+PY
 
-# Run collectstatic the only reliable way on Vercel
+# Collect static files – the only reliable way on Vercel
 echo "=== Running collectstatic ==="
 python -m django collectstatic --no-input --clear --verbosity=2
 
-# Final check
-count=$(find staticfiles -type f 2>/dev/null | wc -l)
+# Final count
+count=$(find staticfiles -type f 2>/dev/null | wc -l || echo 0)
 echo "Collected $count static files"
-[ "$count" -gt 0 ] && echo "BUILD SUCCESSFUL – deploying now!" || exit 1
+
+if [ "$count" -eq 0 ]; then
+  echo "ERROR: No static files collected"
+  exit 1
+fi
+
+echo "Build completed – your site is going live!"
