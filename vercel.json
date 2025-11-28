@@ -5,26 +5,31 @@
       "src": "build.sh",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "staticfiles"
+        "distDir": "staticfiles",
+        "zeroConfig": true
       }
     },
     {
       "src": "api/wsgi.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "15mb"
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.12"
       }
     }
   ],
   "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "/staticfiles/$1",
-      "continue": true
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/api/wsgi.py"
+    { "src": "/static/(.*)", "dest": "/staticfiles/$1", "continue": true },
+    { "src": "/(.*)", "dest": "/api/wsgi.py" }
+  ],
+  "env": {
+    "PYTHONUNBUFFERED": "1",
+    "DJANGO_SETTINGS_MODULE": "racemate.racemate.settings"
+  },
+  "build": {
+    "env": {
+      "PYTHON_VERSION": "3.12",
+      "PIP_NO_CACHE_DIR": "1"
     }
-  ]
+  }
 }

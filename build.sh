@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail  # safer than set -eux (still fails fast but cleaner output)
-
+apt-get update && apt-get install -y libsqlite3-dev || true
 # Ensure we're in the project root (Vercel sets this)
 cd /vercel/path0 || exit 1
 
