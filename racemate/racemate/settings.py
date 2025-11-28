@@ -121,8 +121,15 @@ USE_TZ = True
 STATIC_URL = "/static/"
 
 # Where collectstatic will collect static files for deployment (Vercel build uses this)
-STATIC_ROOT = BASE_DIR / "staticfiles"
 
+#STATIC_ROOT = BASE_DIR / "staticfiles"
+# Static files
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR.parent / "static",   # ← points to project-root/static/
+]
 # Where your source static files live (so collectstatic can find them)
 STATICFILES_DIRS = [
     BASE_DIR / "static",
