@@ -78,13 +78,17 @@ echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
 # 6. Python import check
 # -----------------------------------------
 python - <<PY
-import importlib, sys
+import importlib, sys, traceback
 mod = "${SETTINGS_MODULE}"
 print("Import test:", mod)
-importlib.import_module(mod)
-print("Import OK:", mod)
+try:
+    importlib.import_module(mod)
+    print("Import OK:", mod)
+except Exception:
+    print("Import failed:")
+    traceback.print_exc()
+    sys.exit(1)
 PY
-
 # -----------------------------------------
 # 7. Run collectstatic (debug wrapped)
 # -----------------------------------------
