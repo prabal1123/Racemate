@@ -1,25 +1,32 @@
 #!/usr/bin/env bash
 set -eux
 
-# Ensure working dir is repo root used by Vercel
+# -----------------------------------------
+# 0. Go to Vercel project root
+# -----------------------------------------
 cd /vercel/path0
 
 echo "=== pwd ==="
 pwd
-
-echo "=== ls -la (repo root) ==="
+echo "=== ls (repo root) ==="
 ls -la
 
-echo "=== find settings.py (maxdepth 4) ==="
+echo "=== Searching for settings.py ==="
 find . -maxdepth 4 -type f -name "settings.py" -print || true
 
-# Upgrade pip tooling (optional but helpful)
+# -----------------------------------------
+# 1. Upgrade pip tooling
+# -----------------------------------------
 python -m pip install --upgrade pip setuptools wheel
 
-# Install python deps
+# -----------------------------------------
+# 2. Install python dependencies
+# -----------------------------------------
 python -m pip install -r requirements.txt
 
-# If you use node/tailwind, build it first so collectstatic can pick up the generated CSS.
+# -----------------------------------------
+# 3. Node build (if present)
+# -----------------------------------------
 if [ -f package.json ]; then
   if command -v npm >/dev/null 2>&1; then
     npm ci
@@ -30,44 +37,77 @@ if [ -f package.json ]; then
   fi
 fi
 
-# Add repo root to PYTHONPATH
+# -----------------------------------------
+# 4. Add repo root to PYTHONPATH
+# -----------------------------------------
 export PYTHONPATH="/vercel/path0:${PYTHONPATH:-}"
 echo "PYTHONPATH set to: $PYTHONPATH"
 
-# Auto-discover settings module path:
+# -----------------------------------------
+# 5. Auto-discover Django settings module
+# -----------------------------------------
 SETTINGS_MODULE=$(python - "$PWD" <<'PY'
 import os, sys
 root = sys.argv[1]
-for dirpath, dirnames, filenames in os.walk(root):
+
+for dirpath, _, filenames in os.walk(root):
     rel = os.path.relpath(dirpath, root)
-    if rel.startswith("env") or rel.startswith(".venv") or rel.startswith(".git"):
+
+    # Skip venv
+    if rel.startswith(("env", ".venv", ".git")):
         continue
+
     if "settings.py" in filenames:
         if rel == ".":
-            module = "settings"
+            print("settings")
         else:
-            module = rel.replace(os.sep, ".") + ".settings"
-        print(module)
+            print(rel.replace(os.sep, ".") + ".settings")
         sys.exit(0)
-# fallback for your layout
+
+# fallback (your project)
 print("racemate.racemate.settings")
 PY
 )
 
 echo "Discovered SETTINGS_MODULE='$SETTINGS_MODULE'"
 
-# Export DJANGO_SETTINGS_MODULE
 export DJANGO_SETTINGS_MODULE="$SETTINGS_MODULE"
 echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
 
-# Quick python import check - will fail early if incorrect
-python -c "import importlib, sys; mod=sys.argv[1]; print('Attempting to import', mod); importlib.import_module(mod); print('Import OK:', mod)" "$SETTINGS_MODULE"
+# -----------------------------------------
+# 6. Python import check
+# -----------------------------------------
+python - <<PY
+import importlib, sys
+mod = "${SETTINGS_MODULE}"
+print("Import test:", mod)
+importlib.import_module(mod)
+print("Import OK:", mod)
+PY
 
-# Ensure staticfiles dir exists
+# -----------------------------------------
+# 7. Run collectstatic (debug wrapped)
+# -----------------------------------------
 mkdir -p staticfiles
 
-# Now collectstatic into STATIC_ROOT (staticfiles/)
-python manage.py collectstatic --noinput
+echo "=== Running collectstatic (debug mode) ==="
+python - <<'PY' || true
+import traceback, os
+from django.core import management
 
-echo "Collectstatic finished. Listing staticfiles/"
+try:
+    management.call_command("collectstatic", verbosity=2, interactive=False)
+except Exception:
+    print("\n=== Collectstatic ERROR ===")
+    traceback.print_exc()
+
+    # Save traceback to Vercel output folder
+    os.makedirs("/vercel/output", exist_ok=True)
+    with open("/vercel/output/collectstatic-error.txt", "w") as f:
+        traceback.print_exc(file=f)
+
+    raise
+PY
+
+echo "=== collectstatic completed ==="
 ls -la staticfiles || true
