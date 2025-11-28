@@ -27,11 +27,17 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 
     # project apps
-    'accounts',
-    'app_admin',
-    'app_bib',
-    'django_filters',
-    'app_results',
+    # 'accounts',
+    # 'app_admin',
+    # 'app_bib',
+    # 'django_filters',
+    # 'app_results',
+
+    'racemate.accounts',
+    'racemate.app_admin',
+    'racemate.app_bib',
+    'racemate.app_results',
+    'racemate.pages',
 
     # auth/social
     'allauth',
