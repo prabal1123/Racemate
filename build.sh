@@ -8,29 +8,26 @@ cd /vercel/path0
 python -m pip install --upgrade pip > /dev/null
 python -m pip install -r requirements.txt > /dev/null
 
-# Ensure project root is in path
+# Set environment
 export PYTHONPATH="/vercel/path0:${PYTHONPATH:-}"
-
-# Hardcode settings module (your structure is known)
 export DJANGO_SETTINGS_MODULE="racemate.racemate.settings"
 
 echo "Using DJANGO_SETTINGS_MODULE=racemate.racemate.settings"
 
-# Test import
-python -c "import django; from django.conf import settings; print('Settings OK:', settings.STATIC_ROOT)" || exit 1
+# Test settings import
+python -c "from django.conf import settings; print('Settings OK → STATIC_ROOT:', settings.STATIC_ROOT)"
 
-# Collect static files
+# Collect static files — THIS IS THE FIX
 echo "=== Running collectstatic ==="
-mkdir -p staticfiles
-python manage.py collectstatic --no-input --clear --verbosity=2
+python -m django collectstatic --no-input --clear --verbosity=2
 
 # Final check
-count=$(find staticfiles -type f 2>/dev/null | wc -l)
+count=$(find staticfiles -type f 2>/dev/null | wc -l || echo 0)
 echo "Collected $count static files"
 
 if [ "$count" -eq 0 ]; then
-  echo "ERROR: No files collected!"
+  echo "ERROR: No static files collected!"
   exit 1
 fi
 
-echo "Build successful! Static files ready at /staticfiles"
+echo "Build completed successfully!"
