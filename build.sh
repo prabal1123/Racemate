@@ -90,23 +90,43 @@ PY
 # -----------------------------------------
 mkdir -p staticfiles
 
-echo "=== Running collectstatic (debug mode) ==="
-python - <<'PY' || true
-import traceback, os
-from django.core import management
-
+echo "=== DEBUG: show Django settings + INSTALLED_APPS ==="
+python - <<'PY'
+import importlib, sys, traceback
+mod = "${SETTINGS_MODULE}"
+print("DJANGO_SETTINGS_MODULE:", mod)
 try:
-    management.call_command("collectstatic", verbosity=2, interactive=False)
+    settings = importlib.import_module(mod)
+    # If django is already configured, use django.conf.settings; otherwise import and run setup
+    import django
+    from django.conf import settings as djsettings
+    print("settings module file:", getattr(settings, '__file__', '<no __file__>'))
+    # Print raw INSTALLED_APPS from module (before Django app registry)
+    print("\nraw installed apps from module (settings.INSTALLED_APPS):")
+    try:
+        print(settings.INSTALLED_APPS)
+    except Exception as e:
+        print("Could not read INSTALLED_APPS from module:", e)
+    # Now try to configure Django and print app registry import results
+    try:
+        django.setup()
+        from django.conf import settings as s
+        print("\nDjango setup completed. settings module path (django):", getattr(s, '__file__', '<no __file>'))
+        print("\nFinal INSTALLED_APPS (django.conf.settings.INSTALLED_APPS):")
+        print(list(s.INSTALLED_APPS))
+    except Exception as e:
+        print("\nERROR during django.setup():")
+        traceback.print_exc()
+        # Try to show partial app import errors:
+        try:
+            from django.apps import apps
+            print("\nRegistered app configs:", [a.name for a in apps.get_app_configs()])
+        except Exception:
+            print("apps.get_app_configs() also failed")
+            traceback.print_exc()
 except Exception:
-    print("\n=== Collectstatic ERROR ===")
+    print("Import settings module failed:")
     traceback.print_exc()
-
-    # Save traceback to Vercel output folder
-    os.makedirs("/vercel/output", exist_ok=True)
-    with open("/vercel/output/collectstatic-error.txt", "w") as f:
-        traceback.print_exc(file=f)
-
-    raise
 PY
 
 echo "=== collectstatic completed ==="
