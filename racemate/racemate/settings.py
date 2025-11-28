@@ -127,9 +127,7 @@ STATIC_URL = "/static/"
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR.parent / "static",   # ← points to project-root/static/
-]
+STATICFILES_DIRS = [str(BASE_DIR.parent / "static")]
 # Where your source static files live (so collectstatic can find them)
 STATICFILES_DIRS = [
     BASE_DIR / "static",
