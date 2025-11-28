@@ -38,22 +38,19 @@ echo "PYTHONPATH set to: $PYTHONPATH"
 SETTINGS_MODULE=$(python - "$PWD" <<'PY'
 import os, sys
 root = sys.argv[1]
-candidates = []
 for dirpath, dirnames, filenames in os.walk(root):
-    # limit depth to avoid scanning venvs etc
     rel = os.path.relpath(dirpath, root)
     if rel.startswith("env") or rel.startswith(".venv") or rel.startswith(".git"):
         continue
     if "settings.py" in filenames:
-        # build module path from rel path
         if rel == ".":
             module = "settings"
         else:
             module = rel.replace(os.sep, ".") + ".settings"
         print(module)
         sys.exit(0)
-# fallback
-print("racemate.settings")
+# fallback for your layout
+print("racemate.racemate.settings")
 PY
 )
 
@@ -64,13 +61,10 @@ export DJANGO_SETTINGS_MODULE="$SETTINGS_MODULE"
 echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
 
 # Quick python import check - will fail early if incorrect
-python - <<'PY'
-import importlib, sys
-mod = sys.argv[1]
-print("Attempting to import", mod)
-importlib.import_module(mod)
-print("Import OK:", mod)
-PY "$SETTINGS_MODULE"
+python -c "import importlib, sys; mod=sys.argv[1]; print('Attempting to import', mod); importlib.import_module(mod); print('Import OK:', mod)" "$SETTINGS_MODULE"
+
+# Ensure staticfiles dir exists
+mkdir -p staticfiles
 
 # Now collectstatic into STATIC_ROOT (staticfiles/)
 python manage.py collectstatic --noinput
