@@ -1,8 +1,11 @@
 # racemate/racemate/settings.py
 from pathlib import Path
 import os
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+sys.path.insert(0, str(BASE_DIR))
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-nb$is1kj1zfah^9y09$dw$3ghiml3cf8yqs(vbv@7v9ryoyvu+")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
