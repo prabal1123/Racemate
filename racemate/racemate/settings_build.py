@@ -1,18 +1,21 @@
+
 # racemate/racemate/settings_build.py
 """
-Build-only Django settings for Vercel (static collection only).
-Avoids importing sqlite3 and avoids loading Django apps.
+Build-only settings for Vercel collectstatic.
+Do NOT use at runtime.
 """
 
 from pathlib import Path
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# settings_build.py path: <repo_root>/racemate/racemate/settings_build.py
+HERE = Path(__file__).resolve()
+PROJECT_ROOT = HERE.parents[2]    # -> <repo_root>
+APP_BASE = HERE.parents[1]        # -> <repo_root>/racemate (where racemate/static lives)
 
 DEBUG = False
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "build-secret-key")
 
-# Only include staticfiles so Django won't import models
 INSTALLED_APPS = [
     "django.contrib.staticfiles",
 ]
@@ -22,11 +25,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
 ]
 
-# Use real urls UNLESS it causes import errors.
 ROOT_URLCONF = "racemate.urls"
-
-# If racemate.urls imports any app model at import-time, SWITCH to:
-# ROOT_URLCONF = "racemate.urls_build"
 
 TEMPLATES = [
     {
@@ -37,21 +36,19 @@ TEMPLATES = [
     }
 ]
 
+# Vercel expects the build output directory at the repository root: <repo_root>/staticfiles
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = PROJECT_ROOT / "staticfiles"
 
-# Your real settings use BASE_DIR / "static"
+# Source static dirs: repo_root/static (if any) and repo_root/racemate/static (your actual path)
 STATICFILES_DIRS = [
-    BASE_DIR / "static",        # racemate/static
+    PROJECT_ROOT / "static",
+    APP_BASE / "static",
 ]
 
-# Allow dummy DB to avoid sqlite3 import
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.dummy",
-    }
-}
+DATABASES = {"default": {"ENGINE": "django.db.backends.dummy"}}
 
 ALLOWED_HOSTS = ["*"]
 USE_I18N = False
 USE_TZ = False
+                
