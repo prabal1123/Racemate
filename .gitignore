@@ -1,0 +1,15 @@
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Local DB
+racemate/db.sqlite3
+*.sqlite3
+
+# Virtualenvs
+env/
+.venv/
+ENV/
+
+# macOS
+.DS_Store
