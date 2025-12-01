@@ -1,26 +1,49 @@
-# api/wsgi.py — robust autodiscovery + export `app` for Vercel
-import os
-import sys
-import traceback
 from pathlib import Path
-import importlib
+import sys
+import os
 
-# Ensure repo root on sys.path (one level above api/)
-ROOT = Path(__file__).resolve().parent.parent
-root_str = str(ROOT)
-if root_str not in sys.path:
-    sys.path.insert(0, root_str)
+# --- Robust repo-root detection (works locally and on Vercel) ---
+# api/wsgi.py is typically at: <repo_root>/api/wsgi.py
+HERE = Path(__file__).resolve()
+# Candidate 1: parent of api (expected repo root)
+CAND1 = HERE.parent.parent        # ../  -> repo root when api/ is at repo_root/api/
+# Candidate 2: one level up (handles nested 'racemate' layout)
+CAND2 = HERE.parent              # ../api_parent -> sometimes repo root/racemate/api
+# Candidate 3: two levels up (safe fallback)
+CAND3 = HERE.parents[2] if len(HERE.parents) >= 3 else CAND1
 
-# Also add outer racemate folder to sys.path if present (handles nested layouts)
-outer_racemate = ROOT / "racemate"
-if outer_racemate.exists() and str(outer_racemate) not in sys.path:
-    sys.path.insert(0, str(outer_racemate))
+# Choose the candidate that contains manage.py and the top-level racemate folder if possible
+repo_root = None
+for cand in (CAND1, CAND2, CAND3):
+    if (cand / "manage.py").exists() and (cand / "racemate").exists():
+        repo_root = cand
+        break
 
-# --- DEBUG (optional, useful in Vercel logs) ---
-print("DEBUG: api/wsgi.py running. sys.path[0] =", sys.path[0])
+# Fallbacks: prefer CAND1, then CAND3, then CAND2
+if repo_root is None:
+    for cand in (CAND1, CAND3, CAND2):
+        if cand.exists():
+            repo_root = cand
+            break
+
+repo_root = repo_root or CAND1
+repo_root_str = str(repo_root)
+
+# Put repository root at the front of sys.path so imports like `import racemate.accounts` work.
+if repo_root_str not in sys.path:
+    sys.path.insert(0, repo_root_str)
+
+# Also ensure the inner racemate package directory is available (helps in nested layouts)
+inner_racemate = repo_root / "racemate"
+if inner_racemate.exists() and str(inner_racemate) not in sys.path:
+    sys.path.insert(0, str(inner_racemate))
+
+# DEBUG prints (will show in Vercel logs)
+print("DEBUG: repo_root =", repo_root_str)
+print("DEBUG: sys.path[0] =", sys.path[0])
 print("DEBUG: sys.path[:4] =", sys.path[:4])
-print("DEBUG: files at project root:", sorted(p.name for p in ROOT.iterdir()))
-# --- end debug ---
+print("DEBUG: repo root files:", sorted(p.name for p in repo_root.iterdir()))
+
 
 # Build candidate settings names
 candidates = [
