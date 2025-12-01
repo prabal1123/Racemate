@@ -6,35 +6,30 @@ from pathlib import Path
 import importlib
 
 # -------------------------
-# Repo root detection / sys.path setup
+# Robust repo-root detection (walk ancestors for manage.py)
 # -------------------------
 HERE = Path(__file__).resolve()
-# Candidates:
-CAND1 = HERE.parent.parent        # <repo_root>
-CAND2 = HERE.parent               # sometimes <repo_root>/racemate/api
-CAND3 = HERE.parents[2] if len(HERE.parents) >= 3 else CAND1
 
 repo_root = None
-for cand in (CAND1, CAND2, CAND3):
+# include HERE.parent then all parents
+candidates = [HERE.parent] + list(HERE.parents)
+
+for cand in candidates:
     try:
-        if (cand / "manage.py").exists() and (cand / "racemate").exists():
+        if (cand / "manage.py").exists():
             repo_root = cand
             break
     except Exception:
         continue
 
+# fallback: prefer two levels up if nothing found
 if repo_root is None:
-    # fallbacks
-    for cand in (CAND1, CAND3, CAND2):
-        if cand.exists():
-            repo_root = cand
-            break
+    repo_root = HERE.parents[2] if len(HERE.parents) >= 3 else HERE.parent
 
-repo_root = repo_root or CAND1
-ROOT = repo_root   # keep compatibility with earlier code variable name
+ROOT = repo_root
 ROOT_STR = str(ROOT)
 
-# Put repository root at the front of sys.path so imports like `import racemate.accounts` work.
+# Ensure repo root is first on sys.path
 if ROOT_STR not in sys.path:
     sys.path.insert(0, ROOT_STR)
 
@@ -50,7 +45,6 @@ try:
     print("DEBUG: sys.path[:4] =", sys.path[:4])
     print("DEBUG: repo root files:", sorted(p.name for p in ROOT.iterdir()))
 except Exception:
-    # don't crash on printing
     pass
 
 # -------------------------
@@ -85,7 +79,6 @@ for mod in candidates:
     except Exception as exc:
         print(f"DEBUG: candidate {mod} rejected: {exc!r}")
 
-# Try trimmed discovered candidates if necessary
 if not found:
     for full in discovered:
         parts = full.split(".")
@@ -104,7 +97,6 @@ if not found:
         "Unable to locate an importable settings module. Tried: " + ", ".join(candidates + discovered)
     )
 
-# Set the discovered settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", found)
 print("DEBUG: Using DJANGO_SETTINGS_MODULE =", found)
 
