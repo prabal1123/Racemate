@@ -1,0 +1,46 @@
+{% include 'base.html' %}
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+  <div class="card shadow-lg border-0 rounded-4 text-center p-5" style="max-width: 600px; width: 100%;">
+
+    <!-- Success Icon -->
+    <div class="mb-4">
+      <div class="rounded-circle bg-success d-inline-flex justify-content-center align-items-center"
+           style="width: 90px; height: 90px;">
+        <span style="font-size: 40px; color: white;">✓</span>
+      </div>
+    </div>
+
+    <!-- Heading -->
+    <h2 class="fw-bold text-success mb-3">
+      Registration Successful!
+    </h2>
+
+    <!-- Message -->
+    <p class="text-muted fs-5">
+      Thank you for registering for the event.
+      Your submission has been received successfully.
+    </p>
+
+    <hr class="my-4">
+
+    <!-- Buttons -->
+    <div class="d-grid gap-2">
+      <a href="{% url 'accounts:home' %}" class="btn btn-primary btn-lg rounded-3">
+        Go to Home
+      </a>
+
+      <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary rounded-3">
+        Register Another Participant
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Optional Auto Redirect After 5 Seconds -->
+<script>
+  setTimeout(function(){
+    window.location.href = "{% url 'accounts:home' %}";
+  }, 5000);
+</script>

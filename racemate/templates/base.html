@@ -23,6 +23,8 @@
   </head>
 
   <body>
+
+    
     {% include "partials/nav.html" %}
 
     {% if messages %}
@@ -32,8 +34,7 @@
     {% endif %}
 
     <!-- add site-content class so we can target main content if needed -->
-    <main class="site-content container my-4">
+    <main class="site-content">
       {% block content %}{% endblock %}
     </main>
 
-    ...

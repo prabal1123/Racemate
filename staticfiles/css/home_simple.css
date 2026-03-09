@@ -1,4 +1,4 @@
-/* 
+/* home.css - styles for accounts home/hero card */
 :root{
   --card-bg: #ffffff;
   --panel-bg: #f3f8fb;
@@ -10,14 +10,14 @@
   --shadow-soft: 0 8px 24px rgba(13,46,72,0.06);
 }
 
-
+/* container */
 .hm-container{
   max-width: 1180px;
   margin: 0 auto;
   padding: 32px;
 }
 
-
+/* outer hero card */
 .hm-hero {
   background: var(--card-bg);
   border-radius: 12px;
@@ -28,7 +28,7 @@
   overflow: visible;
 }
 
-
+/* hero inner text */
 .hm-hero h1 {
   font-size: 46px;
   line-height: 1.05;
@@ -44,7 +44,7 @@
   font-size: 16px;
 }
 
-
+/* pale info panel under heading */
 .hm-info-panel {
   margin-top: 18px;
   background: var(--panel-bg);
@@ -56,7 +56,7 @@
   box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
 }
 
-
+/* button group */
 .hm-cta {
   margin-top: 26px;
   display: flex;
@@ -65,7 +65,7 @@
   align-items: center;
 }
 
-
+/* default button look */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -80,7 +80,7 @@
   box-shadow: 0 6px 18px rgba(13,46,72,0.06);
 }
 
-
+/* primary gradient pill */
 .btn.primary {
   color: var(--btn-text);
   background: linear-gradient(180deg, var(--primary-1) 0%, var(--primary-2) 100%);
@@ -89,7 +89,7 @@
   font-weight: 600;
 }
 
-
+/* secondary / outline */
 .btn.outline {
   background: transparent;
   color: #0f1724;
@@ -99,7 +99,7 @@
   font-weight: 600;
 }
 
-
+/* small icon style inside button (if you add icons) */
 .btn .icon {
   display:inline-flex;
   width:20px;
@@ -108,14 +108,14 @@
   justify-content:center;
 }
 
-
+/* hover */
 .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(13,46,72,0.08); }
 .btn.outline:hover { background: rgba(13,46,72,0.02); }
 
-
+/* responsive */
 @media (max-width: 768px) {
   .hm-hero h1 { font-size: 34px; }
   .hm-info-panel { font-size: 16px; padding: 18px; }
   .hm-container { padding: 20px; }
   .btn { font-size: 15px; padding: 10px 16px; }
-} */
+}

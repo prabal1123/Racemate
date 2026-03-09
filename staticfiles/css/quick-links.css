@@ -1,0 +1,63 @@
+/* quick-links.css */
+
+/* Wrapper box */
+.quick-links-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(20,30,60,0.06);
+  padding: 32px;
+  background: #ffffff;
+}
+
+/* Larger cards */
+.quick-card {
+  border-radius: 12px;
+  border: 1px solid #e9eef2;
+  min-height: 150px;
+  transition: transform .18s ease, box-shadow .18s ease;
+  background: #fff;
+}
+
+.quick-card .card-body {
+  padding: 1.6rem;
+}
+
+/* Big icons */
+.icon-square-lg {
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #e9fbfa;
+}
+
+.icon-square-lg i {
+  font-size: 1.6rem;
+  color: #18a6a0;
+}
+
+.quick-card .card-title {
+  font-size: 1.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.quick-card .card-text {
+  font-size: 0.975rem;
+  color: #6b7280;
+}
+
+.quick-card .card-arrow {
+  font-size: 1.25rem;
+  color: #6b7280;
+}
+
+/* Hover effect */
+.quick-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 30px rgba(20,30,60,0.08);
+}
+
+.quick-card a.text-decoration-none {
+  color: inherit;
+}

@@ -1,29 +1,152 @@
-{# templates/accounts/home.html #}
 {% extends "base.html" %}
 {% load static %}
 
 {% block title %}Racemate — Home{% endblock %}
 
-
 {% block content %}
-<div class="container mx-auto py-8">
-  <section class="card mb-8">
-    <div class="card-inner p-8">
-      <h1 class="text-4xl font-bold mb-2">Welcome to Racemate</h1>
-      <p class="text-muted mb-6">Quick access: register for events, sign in with social providers (if configured), or manage your account.</p>
 
-      <div class="flex flex-wrap gap-4">
-        <a class="btn primary" href="{% url 'accounts:register' %}">Create a Registration</a>
-        <a class="btn" href="{% url 'socialaccount_connections' %}">Account Connections</a>
-        {% if request.user.is_staff %}
-          <a class="btn outline" href="{% url 'analysis_dashboard' %}">Admin Dashboard</a>
-        {% endif %}
-      </div>
+<!-- ================= HERO ================= -->
+
+<section class="hero">
+  <div class="hero-overlay"></div>
+
+  <div class="hero-inner">
+    <h1 class="hero-title">
+      FIND YOUR <br>
+      <span>NEXT RACE</span>
+    </h1>
+
+    <p class="hero-subtitle">
+      Discover upcoming cycling events, register in seconds,
+      and track your results — all in one place.
+    </p>
+
+    <div class="hero-buttons">
+      <a href="{% url 'accounts:register' %}" class="btn hero-outline">
+        Create Registration
+      </a>
+      <a href="#" class="btn hero-primary">Browse Races</a>
+      <a href="#" class="btn hero-secondary">View Results</a>
     </div>
-  </section>
+  <div class="hero-scroll"></div>
+</section>
 
-  {% if quick_links %}
-    {% include "partials/quick_links.html" with quick_links=quick_links arrow_icon=arrow_icon %}
-  {% endif %}
-</div>
+
+<!-- ================= UPCOMING RACES ================= -->
+
+<section class="races-section container">
+
+  <h2 class="section-title">UPCOMING RACES</h2>
+  <p class="section-subtitle">
+    Browse current and upcoming cycling events. Register early to secure your spot.
+  </p>
+
+  <div class="race-grid">
+    {% for race in races %}
+      <div class="race-card {% if race.status == 'open' %}active{% endif %}">
+
+        <div class="race-header">
+          <h3>{{ race.name }}</h3>
+
+          {% if race.status == "live" %}
+            <span class="badge-live">LIVE NOW</span>
+          {% elif race.status == "open" %}
+            <span class="badge-open">REGISTRATION OPEN</span>
+          {% else %}
+            <span class="badge-soon">COMING SOON</span>
+          {% endif %}
+        </div>
+
+        <ul class="race-meta">
+          <li>{{ race.date }}</li>
+          <li>{{ race.location }}</li>
+          <li>{{ race.riders }} riders · {{ race.distance }} km</li>
+        </ul>
+
+        {% if race.status == "live" or race.status == "open" %}
+          <a href="#" class="btn-register">Register Now</a>
+        {% else %}
+          <button class="btn-disabled">Notify Me</button>
+        {% endif %}
+
+      </div>
+    {% endfor %}
+  </div>
+
+</section>
+
+
+<!-- ================= QUICK LINKS ================= -->
+
+<section class="quick-links container">
+  <div class="quick-grid">
+    {% for link in quick_links %}
+      <a href="{{ link.href }}" class="quick-card">
+        <div class="quick-icon">
+          {{ link.icon|safe }}
+        </div>
+        <div>
+          <h4>{{ link.title }}</h4>
+          <p>{{ link.description }}</p>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+
+<!-- ================= RECENT RESULTS ================= -->
+
+<section class="results-section container">
+
+  <h2 class="section-title">RECENT RESULTS</h2>
+  <p class="section-subtitle">
+    See how the top riders performed in recently completed events.
+  </p>
+
+  <div class="results-grid">
+    {% for event in recent_results %}
+      <div class="result-card">
+
+        <h3>{{ event.event }}</h3>
+        <p class="result-date">{{ event.date }}</p>
+
+        <ul class="result-list">
+          {% for rider in event.results %}
+            <li>
+              <span class="rider-name">
+                {% if forloop.first %}
+                  🏆
+                {% elif forloop.counter == 2 %}
+                  🥈
+                {% elif forloop.counter == 3 %}
+                  🥉
+                {% endif %}
+                {{ rider.name }}
+              </span>
+              <span class="rider-time">{{ rider.time }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+
+      </div>
+    {% endfor %}
+  </div>
+
+</section>
+<footer class="rm-footer mt-auto">
+  <div class="container d-flex justify-content-between align-items-center py-4">
+    
+    <!-- Left: Logo -->
+    <div class="rm-footer-brand">
+      <span class="rm-black">RACE</span><span class="rm-blue">MATE</span>
+    </div>
+
+    <!-- Right: Copyright -->
+    <div class="rm-footer-text">
+      © 2026 Racemate. Built for riders, by riders.
+    </div>
+
+  </div>
+</footer>
 {% endblock %}

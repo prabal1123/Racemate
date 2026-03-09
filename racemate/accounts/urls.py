@@ -48,4 +48,5 @@ urlpatterns = [
     #path('login/', views.viewLogin, name='login'),
     path('accounts/login/',views.viewLogin,name='login'),
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
+    path('registration-success/', views.registration_success, name='registration_success'),
 ]
