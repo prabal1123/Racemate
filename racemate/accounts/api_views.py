@@ -14,6 +14,7 @@ from .models import EmailOTP
 from .utils import send_azure_otp 
 from .serializers import ProfileSerializer
 from .models import Profile
+from django.contrib.auth import login as django_login
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -179,6 +180,7 @@ class VerifyEmailOTPAPIView(APIView):
         email = request.data.get('email')
         code = request.data.get('otp')
 
+        # Fetch the most recent OTP record matching the email and code
         otp_obj = EmailOTP.objects.filter(email=email, code=code).last()
 
         if not otp_obj or not otp_obj.is_valid():
@@ -192,6 +194,13 @@ class VerifyEmailOTPAPIView(APIView):
                 email=email,
             )
 
+        # Log the user into the traditional Django Session framework.
+        # Passing 'backend' resolves the ValueError caused by having multiple auth backends configured.
+        django_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        request.session.modified = True
+        request.session.save()
+
+        # Generate JWT tokens for API clients if needed
         tokens = get_tokens_for_user(user)
 
         response_data = {
@@ -201,17 +210,22 @@ class VerifyEmailOTPAPIView(APIView):
         }
 
         response = Response(response_data)
+        
+        # Set the refresh token cookie
+        # NOTE: secure=False is used here so the cookie works over unencrypted HTTP (like your AWS IP address).
+        # Remember to switch secure=True when you point a domain with HTTPS to your AWS instance!
         response.set_cookie(
             key='refresh_token',
             value=tokens['refresh'],
             httponly=True,
-            secure=True,
+            secure=False,  
             samesite='Lax',
             max_age=24 * 60 * 60 * 7
         )
 
-        return response    
-
+        return response
+    
+    
 class UserProfileAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]

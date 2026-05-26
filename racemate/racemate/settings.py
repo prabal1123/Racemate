@@ -17,7 +17,9 @@ ALLOWED_HOSTS = [
     "racemate-j57dwy1q0-prabal1123s-projects.vercel.app",
     "*",
 ]
-
+CSRF_TRUSTED_ORIGINS = [
+    'http://16.112.118.116:8080',
+]
 SITE_ID = 1
 
 INSTALLED_APPS = [

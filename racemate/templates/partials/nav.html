@@ -1,133 +1,104 @@
 {% load static %}
 
-<nav class="site-navbar">
-  <div class="container">
-    <div class="nav-inner">
-      <a href="/" class="brand">Racemate</a>
+<nav class="rm-nav">
+  <div class="rm-nav-inner">
 
-      {% with name=request.resolver_match.url_name namespace=request.resolver_match.namespace %}
-      <div class="nav-links" id="nav-links-desktop">
+    <a href="/" class="rm-brand">Racemate</a>
 
-        <a href="/"
-           class="link {% if name == 'home' and not namespace %}active{% endif %}">
-          Home
-        </a>
+    {% with name=request.resolver_match.url_name namespace=request.resolver_match.namespace %}
+
+    {# ── Desktop links (staff only) ── #}
+    {% if user.is_staff %}
+    <div class="rm-nav-links">
+      <a href="/" class="rm-link {% if name == 'home' and not namespace %}rm-active{% endif %}">Home</a>
+
+      <a href="{% url 'admin:index' %}" class="rm-link {% if namespace == 'admin' %}rm-active{% endif %}">Admin Dashboard</a>
+
+      <div class="rm-dd-wrap {% if namespace == 'app_bib' %}rm-active{% endif %}">
+        <button class="rm-link rm-dd-trigger" id="lists-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+          Lists ▾
+        </button>
+        <div class="rm-dd-menu" id="lists-menu" role="menu">
+          <a class="rm-dd-item" href="{% url 'registration_list' %}">Registration List</a>
+          <a class="rm-dd-item" href="{% url 'app_bib:registration_bib_list' %}">Bib List</a>
+          <a class="rm-dd-item" href="{% url 'app_bib:heat_list' %}">Heat List</a>
+          <a class="rm-dd-item" href="{% url 'app_bib:start_list' %}">Start List</a>
+          <a class="rm-dd-item" href="{% url 'app_bib:time_entry' %}">Time Entry</a>
+          <a class="rm-dd-item" href="{% url 'app_results:list' %}">Results</a>
+        </div>
+      </div>
+
+      <a href="{% url 'analysis_dashboard' %}" class="rm-link {% if name == 'analysis_dashboard' %}rm-active{% endif %}">Analysis Dashboard</a>
+    </div>
+    {% endif %}
+
+    {# ── Right side: account button + hamburger ── #}
+    <div class="rm-nav-right">
+
+      {# Account dropdown — desktop #}
+      <div class="rm-dd-wrap">
+        <button class="rm-account-btn rm-dd-trigger" id="account-trigger" type="button" aria-expanded="false">
+          Account ▾
+        </button>
+        <div class="rm-dd-menu rm-dd-right" id="account-menu" role="menu">
+          {% if user.is_authenticated %}
+            <div class="rm-dd-label">{{ user.first_name|default:user.username }}</div>
+            <hr class="rm-dd-sep">
+            <a class="rm-dd-item" href="{% url 'accounts:profile' %}"><strong>My Profile</strong></a>
+            <a class="rm-dd-item" href="{% url 'accounts:profile_edit' %}">Settings</a>
+            <hr class="rm-dd-sep">
+            <form method="post" action="{% url 'accounts:logout' %}" style="margin:0">
+              {% csrf_token %}
+              <button type="submit" class="rm-dd-item rm-dd-danger">Log out</button>
+            </form>
+          {% else %}
+            <div class="rm-dd-label">Account</div>
+            <hr class="rm-dd-sep">
+            <a class="rm-dd-item" href="{% url 'accounts:login' %}">Login</a>
+            <a class="rm-dd-item" href="{% url 'accounts:login' %}">Sign up</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Hamburger — mobile only #}
+      <button class="rm-hamburger" id="mobile-toggle" type="button" aria-expanded="false" aria-label="Open menu">
+        ☰
+      </button>
+    </div>
+
+    {# ── Mobile drawer ── #}
+    <div class="rm-mobile-menu" id="mobile-menu" aria-hidden="true">
+      <ul class="rm-mobile-list">
 
         {% if user.is_staff %}
-        <a href="{% url 'admin:index' %}"
-           class="link {% if namespace == 'admin' %}active{% endif %}">
-          Admin Dashboard
-        </a>
-
-        <div class="nav-item dropdown lists-dropdown {% if namespace == 'app_bib' %}active{% endif %}">
-          <button
-            id="lists-trigger"
-            class="link dropdown-toggle"
-            aria-haspopup="true"
-            aria-expanded="false"
-            type="button">
-            Lists ▾
-          </button>
-
-          <div id="lists-menu" class="dropdown-menu" role="menu" aria-labelledby="lists-trigger">
-            <a class="dropdown-item" href="{% url 'registration_list' %}">Registration List</a>
-            <a class="dropdown-item" href="{% url 'app_bib:registration_bib_list' %}">Bib List</a>
-            <a class="dropdown-item" href="{% url 'app_bib:heat_list' %}">Heat List</a>
-            <a class="dropdown-item" href="{% url 'app_bib:start_list' %}">Start List</a>
-            <a class="dropdown-item" href="{% url 'app_bib:time_entry' %}">Time Entry</a>
-            <a class="dropdown-item" href="{% url 'app_results:list' %}">Results</a>
-          </div>
-        </div>
-
-        <a href="{% url 'analysis_dashboard' %}"
-           class="link {% if name == 'analysis_dashboard' %}active{% endif %}">
-          Analysis Dashboard
-        </a>
+          <li class="rm-mobile-label">Navigation</li>
+          <li><a href="/" class="rm-mobile-link">Home</a></li>
+          <li><a href="{% url 'admin:index' %}" class="rm-mobile-link">Admin Dashboard</a></li>
+          <li><a href="{% url 'app_bib:heat_list' %}" class="rm-mobile-link">Heat List</a></li>
+          <li><a href="{% url 'analysis_dashboard' %}" class="rm-mobile-link">Analysis Dashboard</a></li>
+          <li class="rm-mobile-hr"></li>
         {% endif %}
 
-      </div>
-      {% endwith %}
+        {% if user.is_authenticated %}
+          <li class="rm-mobile-label">{{ user.first_name|default:user.username }}</li>
+          <li><a href="{% url 'accounts:profile' %}" class="rm-mobile-link"><strong>My Profile</strong></a></li>
+          <li><a href="{% url 'accounts:profile_edit' %}" class="rm-mobile-link">Settings</a></li>
+          <li class="rm-mobile-hr"></li>
+          <li>
+            <form method="post" action="{% url 'accounts:logout' %}" style="margin:0">
+              {% csrf_token %}
+              <button type="submit" class="rm-mobile-link rm-mobile-danger">Log out</button>
+            </form>
+          </li>
+        {% else %}
+          <li class="rm-mobile-label">Account</li>
+          <li><a href="{% url 'accounts:login' %}" class="rm-mobile-link">Login</a></li>
+          <li><a href="{% url 'accounts:login' %}" class="rm-mobile-link">Sign up</a></li>
+        {% endif %}
 
-      <div class="nav-right">
-        <div class="dropdown-wrapper">
-          <button
-            id="account-trigger"
-            class="account-btn dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false">
-            Account
-          </button>
-
-          <div id="account-menu" class="dropdown-menu" role="menu">
-            {% if user.is_authenticated %}
-              <div class="dropdown-label">Athlete: {{ user.first_name|default:user.username }}</div>
-              <hr class="dropdown-sep" />
-
-              <a class="dropdown-item" role="menuitem" href="{% url 'accounts:profile' %}">
-                <strong>My Profile</strong>
-              </a>
-              <a class="dropdown-item" role="menuitem" href="{% url 'accounts:profile_edit' %}">Settings</a>
-
-              <hr class="dropdown-sep" />
-
-              <form method="post" action="{% url 'accounts:logout' %}" style="margin:0;">
-                {% csrf_token %}
-                <button type="submit" class="dropdown-item destructive"
-                        style="background:none; border:0; padding:10px 15px; width:100%; text-align:left; cursor:pointer;">
-                  Log out
-                </button>
-              </form>
-            {% else %}
-              <div class="dropdown-label">Account</div>
-              <hr class="dropdown-sep" />
-              <a class="dropdown-item" role="menuitem" href="{% url 'accounts:login' %}">Login</a>
-              <a class="dropdown-item" role="menuitem" href="{% url 'accounts:login' %}">Sign up</a>
-            {% endif %}
-          </div>
-        </div>
-
-        <button id="mobile-toggle" class="mobile-toggle" aria-expanded="false" aria-controls="mobile-menu" type="button" aria-label="Open navigation">
-          ☰
-        </button>
-      </div>
-
-      <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
-        <ul class="mobile-links">
-          <li><a href="/" class="mobile-link">Home</a></li>
-
-          {% if user.is_authenticated %}
-            <li><a href="{% url 'accounts:profile' %}" class="mobile-link">My Profile</a></li>
-            {% if user.is_staff %}
-              <li><a href="{% url 'admin:index' %}" class="mobile-link">Admin Dashboard</a></li>
-              <li><a href="{% url 'registration_list' %}" class="mobile-link">Registration List</a></li>
-              <li><a href="{% url 'app_bib:registration_bib_list' %}" class="mobile-link">Bib List</a></li>
-              <li><a href="{% url 'app_bib:heat_list' %}" class="mobile-link">Heat List</a></li>
-              <li><a href="{% url 'app_bib:start_list' %}" class="mobile-link">Start List</a></li>
-              <li><a href="{% url 'app_bib:time_entry' %}" class="mobile-link">Time Entry</a></li>
-              <li><a href="{% url 'app_results:list' %}" class="mobile-link">Results</a></li>
-              <li><a href="{% url 'analysis_dashboard' %}" class="mobile-link">Analysis Dashboard</a></li>
-            {% endif %}
-            <li class="mobile-divider"></li>
-            <li>
-              <form method="post" action="{% url 'accounts:logout' %}" style="margin:0;">
-                {% csrf_token %}
-                <button type="submit" class="mobile-link destructive"
-                        style="background:none; border:0; padding:0; width:100%; text-align:left;">
-                  Log out
-                </button>
-              </form>
-            </li>
-          {% else %}
-            <li><a href="{% url 'accounts:login' %}" class="mobile-link">Login</a></li>
-            <li><a href="{% url 'accounts:login' %}" class="mobile-link">Sign up</a></li>
-          {% endif %}
-        </ul>
-      </div>
-
+      </ul>
     </div>
+
+    {% endwith %}
   </div>
 </nav>
-
-<link rel="stylesheet" href="{% static 'css/navbar.css' %}">
-<script defer src="{% static 'js/navbar.js' %}"></script>
