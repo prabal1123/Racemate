@@ -1,9 +1,9 @@
-{% include 'base.html' %}
+{% extends 'base.html' %}
 
+{% block content %}
 <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
   <div class="card shadow-lg border-0 rounded-4 text-center p-5" style="max-width: 600px; width: 100%;">
 
-    <!-- Success Icon -->
     <div class="mb-4">
       <div class="rounded-circle bg-success d-inline-flex justify-content-center align-items-center"
            style="width: 90px; height: 90px;">
@@ -11,20 +11,31 @@
       </div>
     </div>
 
-    <!-- Heading -->
-    <h2 class="fw-bold text-success mb-3">
+    <h2 class="fw-bold text-success mb-2">
       Registration Successful!
     </h2>
 
-    <!-- Message -->
-    <p class="text-muted fs-5">
-      Thank you for registering for the event.
-      Your submission has been received successfully.
+    <p class="text-muted mb-4">
+      You are now registered for <br>
+      <span class="fw-bold text-dark">{{ registration.race.name }}</span>
     </p>
+
+    <div class="p-3 mb-4 rounded-3" style="background-color: #f8f9fa; border: 1px dashed #28a745;">
+      <p class="small text-uppercase text-muted mb-1 fw-bold">Your Registration ID</p>
+      <h2 class="fw-bold text-dark mb-0" style="letter-spacing: 2px;">
+        {{ registration.registration_id }}
+      </h2>
+    </div>
+
+    <div class="mb-4">
+        <a href="{% url 'accounts:view_registration_details' registration.registration_id %}" 
+           class="text-decoration-none fw-bold text-primary">
+           <i class="bi bi-eye"></i> View my submitted form details
+        </a>
+    </div>
 
     <hr class="my-4">
 
-    <!-- Buttons -->
     <div class="d-grid gap-2">
       <a href="{% url 'accounts:home' %}" class="btn btn-primary btn-lg rounded-3">
         Go to Home
@@ -35,12 +46,10 @@
       </a>
     </div>
 
+    <p class="mt-4 small text-muted">
+        A confirmation email will be sent to <strong>{{ registration.email }}</strong>
+    </p>
+
   </div>
 </div>
-
-<!-- Optional Auto Redirect After 5 Seconds -->
-<script>
-  setTimeout(function(){
-    window.location.href = "{% url 'accounts:home' %}";
-  }, 5000);
-</script>
+{% endblock %}

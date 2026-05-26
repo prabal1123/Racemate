@@ -1,129 +1,97 @@
-{# templates/home.html #}
 {% extends "base.html" %}
-{% load socialaccount %}
+{% load static %}
 
 {% block title %}Racemate — Home{% endblock %}
 
 {% block content %}
-  <section class="card">
-    <h2 class="h2">Welcome to Racemate</h2>
-    <p class="muted">
-      Quick access: register for events, sign in with social providers (if configured),
-      or manage your account.
+
+<section class="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-inner">
+    <h1 class="hero-title">
+      FIND YOUR <br>
+      <span>NEXT RACE</span>
+    </h1>
+    <p class="hero-subtitle">
+      Discover upcoming cycling events, register in seconds,
+      and track your results — all in one place.
     </p>
-
-    {% if request.user.is_authenticated %}
-      <div class="stack-sm">
-        <strong>Hello, {{ request.user.get_full_name|default:request.user.get_username }}</strong>
-        <p class="muted">Use the links above to manage your account. If you are staff, click Admin Dashboard.</p>
-      </div>
-
-      <div class="row gap">
-        <a class="btn" href="{% url 'register' %}">Create a Registration</a>
-        <a class="btn" href="{% url 'socialaccount_connections' %}">Account Connections</a>
-      </div>
-    {% else %}
-      <div class="row gap">
-        <a class="btn" href="{% url 'account_login' %}">Login</a>
-        <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
-        <a class="btn" href="{% url 'register' %}">Go to Registration Page</a>
-      </div>
-
-      {% if available_providers %}
-        <div class="stack-md">
-          <div class="strong">Or sign in with</div>
-          <ul class="provider-list">
-            {% for prov in available_providers %}
-              <li><a class="btn" href="{% provider_login_url prov.id process='login' %}">
-                Sign in with {{ prov.name }}
-              </a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% else %}
-        <p class="muted">
-          No social login providers are configured for this site.
-          (To enable Google/GitHub, create a SocialApp in admin and attach it to your Site.)
-        </p>
-      {% endif %}
-    {% endif %}
-  </section>
-
-  <section class="card mt">
-    <h3 class="h3">Latest / Quick links</h3>
-    <div class="row gap">
-      <!-- <a class="btn" href="{% url 'register' %}">Register for Event</a> -->
-       <a href="{% url 'accounts:register' %}">Register</a>
-
-      <a class="btn" href="{% url 'account_login' %}">Account Login</a>
-      <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
+    <div class="hero-buttons">
+      <a href="{% url 'accounts:register' %}" class="btn hero-outline">
+        Create Registration
+      </a>
+      <a href="#races" class="btn hero-primary">Browse Races</a>
+      <a href="#" class="btn hero-secondary">View Results</a>
     </div>
-  </section>
+  </div>
+</section>
+
+<section id="races" class="races-section container">
+  <h2 class="section-title">UPCOMING RACES</h2>
+  <p class="section-subtitle">
+    Browse current and upcoming cycling events. Register early to secure your spot.
+  </p>
+
+  <div class="race-grid">
+    {% for race in races %}
+      <div class="race-card">
+        <div class="race-header">
+          <h3>{{ race.name }}</h3>
+
+          {% if race.status == "LIVE NOW" %}
+            <span class="badge-live">LIVE NOW</span>
+          {% elif race.status == "REGISTRATION OPEN" %}
+            <span class="badge-open">REGISTRATION OPEN</span>
+          {# Logic to check if the race date is in the past [cite: 254, 255] #}
+          {% elif race.race_start < now %}
+            <span class="badge-expired">EVENT ENDED</span>
+          {% else %}
+            <span class="badge-soon">COMING SOON</span>
+          {% endif %}
+        </div>
+
+        <ul class="race-meta">
+          <li>
+            <strong>Date:</strong> {{ race.race_start|date:"M d, Y" }}
+            {% if race.race_start < now %} <span class="text-muted">(Past)</span>{% endif %}
+          </li>
+          <li><strong>Location:</strong> {{ race.location }} [cite: 441]</li>
+          <li><strong>Participation:</strong> {{ race.race_registrations.count }} riders</li>
+        </ul>
+
+        <div class="race-events-preview">
+          <p class="event-label">Available Categories:</p>
+          <div class="event-tags">
+            {% for event in race.events.all %}
+              <span class="event-tag">
+                {{ event.title }} 
+                {% if event.distance_km %}({{ event.distance_km }}km){% endif %} [cite: 441]
+              </span>
+            {% empty %}
+              <span class="event-tag-none">General Participation</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="race-card-footer">
+            {% if race.status == "LIVE NOW" or race.status == "REGISTRATION OPEN" %}
+              <a href="{% url 'accounts:register' %}?race_id={{ race.id }}" class="btn-register">
+                Register Now
+              </a>
+            {% elif race.race_start < now %}
+              {# Option for users to view standings for past events [cite: 297, 447] #}
+              <a href="#" class="btn-results">View Results</a>
+            {% else %}
+              <button class="btn-disabled" disabled>Notify Me</button>
+            {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="no-races">
+        <p>No races scheduled at the moment. Check back soon!</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
 {% endblock %}
-
-
-
-
-
-<!-- {# templates/home.html #}
-{% extends "base.html" %}
-{% load socialaccount %}
-
-{% block title %}Racemate — Home{% endblock %}
-
-{% block content %}
-  <section class="card">
-    <h2 class="h2">Welcome to Racemate</h2>
-    <p class="muted">
-      Quick access: register for events, sign in with social providers (if configured),
-      or manage your account.
-    </p>
-
-    {% if request.user.is_authenticated %}
-      <div class="stack-sm">
-        <strong>Hello, {{ request.user.get_full_name|default:request.user.get_username }}</strong>
-        <p class="muted">Use the links above to manage your account. If you are staff, click Admin Dashboard.</p>
-      </div>
-
-      <div class="row gap">
-        <a class="btn" href="/register/">Create a Registration</a>
-        <a class="btn" href="{% url 'socialaccount_connections' %}">Account Connections</a>
-      </div>
-    {% else %}
-      <div class="row gap">
-        <a class="btn" href="{% url 'account_login' %}">Login</a>
-        <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
-        <a class="btn" href="/register/">Go to Registration Page</a>
-      </div>
-
-      {% if available_providers %}
-        <div class="stack-md">
-          <div class="strong">Or sign in with</div>
-          <ul class="provider-list">
-            {% for prov in available_providers %}
-              <li><a class="btn" href="{% provider_login_url prov.id process='login' %}">
-                Sign in with {{ prov.name }}
-              </a></li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% else %}
-        <p class="muted">
-          No social login providers are configured for this site.
-          (To enable Google/GitHub, create a SocialApp in admin and attach it to your Site.)
-        </p>
-      {% endif %}
-    {% endif %}
-  </section>
-
-  <section class="card mt">
-    <h3 class="h3">Latest / Quick links</h3>
-    <div class="row gap">
-      
-       <a href="{% url 'accounts:register' %}">Register</a>
-
-      <a class="btn" href="{% url 'account_login' %}">Account Login</a>
-      <a class="btn" href="{% url 'account_signup' %}">Sign up</a>
-    </div>
-  </section>
-{% endblock %} -->

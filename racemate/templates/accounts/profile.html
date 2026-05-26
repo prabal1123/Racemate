@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    :root {
+        --sport-blue: #0066ff;
+        --athlete-black: #111111;
+        --text-gray: #666666;
+        --bg-gray: #f9fafb;
+    }
+    .profile-page-wrapper { background: var(--bg-gray); padding: 40px 20px; min-height: 100vh; }
+    .athlete-card {
+        max-width: 850px; margin: 0 auto; background: #fff;
+        border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+    }
+    .athlete-header { height: 160px; background: #000; position: relative; }
+    .athlete-content { padding: 0 40px 40px; position: relative; }
+    
+    .avatar-wrapper {
+        width: 140px; height: 140px; border-radius: 50%; border: 6px solid #fff;
+        margin-top: -70px; margin-bottom: 20px; overflow: hidden; background: #eee;
+    }
+    .avatar-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .btn-edit-pro {
+        position: absolute; right: 40px; top: 20px;
+        background: #000; color: #fff; padding: 10px 24px; border-radius: 50px;
+        font-weight: 600; text-decoration: none; font-size: 14px; transition: 0.3s;
+    }
+    .btn-edit-pro:hover { background: var(--sport-blue); transform: translateY(-2px); }
+
+    .athlete-name { font-size: 32px; font-weight: 800; color: #111; margin: 0; }
+    .athlete-bio { color: var(--text-gray); margin: 10px 0 25px; line-height: 1.6; }
+
+    .stats-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px; border-top: 1px solid #eee; padding-top: 25px;
+    }
+    .stat-box { padding: 15px; border-radius: 12px; background: #fafafa; border: 1px solid #f0f0f0; }
+    .stat-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-value { font-size: 14px; font-weight: 600; color: #222; }
+
+    /* View More Logic */
+    .details-toggle {
+        display: inline-block; margin-top: 25px; color: var(--sport-blue);
+        font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 12px;
+    }
+    .detailed-info {
+        display: none; margin-top: 15px; padding: 20px;
+        background: #fff; border-radius: 12px; border: 1px dashed #ddd;
+    }
+    .detailed-info.active { display: block; animation: fadeIn 0.4s ease; }
+
+    /* Registration List Styling */
+    .reg-section-title {
+        font-size: 18px; font-weight: 800; color: #111;
+        margin-top: 50px; padding-left: 15px; border-left: 4px solid var(--sport-blue);
+    }
+    .reg-item {
+        background: #fff; border: 1px solid #eee; transition: 0.2s ease;
+        padding: 20px; border-radius: 16px; margin-bottom: 12px;
+    }
+    .reg-item:hover {
+        border-color: var(--sport-blue); transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .btn-view-reg {
+        font-size: 12px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: var(--athlete-black); border: 2px solid #eee;
+        padding: 8px 16px; border-radius: 50px; text-decoration: none; transition: 0.2s;
+    }
+    .btn-view-reg:hover { background: var(--athlete-black); color: #fff; border-color: var(--athlete-black); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="profile-page-wrapper">
+    <div class="athlete-card">
+        <div class="athlete-header"></div>
+        <div class="athlete-content">
+            <a href="{% url 'accounts:profile_edit' %}" class="btn-edit-pro">Edit Profile</a>
+            
+            <div class="avatar-wrapper">
+                <img src="{{ profile.profile_image.url }}" alt="Athlete">
+            </div>
+
+            <h1 class="athlete-name">{{ user.get_full_name|default:user.username }}</h1>
+            <p class="athlete-bio">{{ profile.bio|default:"No bio added yet. Ready for the next race?" }}</p>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Email</div>
+                    <div class="stat-value">{{ user.email }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Contact</div>
+                    <div class="stat-value">{{ profile.phone_number|default:"—" }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Location</div>
+                    <div class="stat-value">{{ profile.city|default:"Not Set" }}</div>
+                </div>
+            </div>
+
+            <div class="details-toggle" onclick="toggleDetails()" id="toggleBtn">
+                View Full Details ▾
+            </div>
+
+            <div id="extraDetails" class="detailed-info">
+                <div class="stats-grid" style="border: none; padding: 0;">
+                    <div class="stat-box">
+                        <div class="stat-label">Date of Birth</div>
+                        <div class="stat-value">{{ profile.dob|default:"—" }}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Blood Group</div>
+                        <div class="stat-value">{{ profile.blood_group|default:"—" }}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Identity Docs</div>
+                        <div class="stat-value">
+                            PAN: {{ profile.pan_number|default:"—" }}<br>
+                            UID: {{ profile.aadhaar_number|default:"—" }}
+                        </div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Full Address</div>
+                        <div class="stat-value">
+                            {{ profile.address_line_1|default:"No address saved." }}<br>
+                            {{ profile.zip_code }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="reg-section-title">My Registrations</h2>
+            
+            <div class="mt-4">
+                {% if registrations %}
+                    {% for reg in registrations %}
+                    <div class="reg-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold mb-1" style="font-size: 16px; color: #111;">{{ reg.race.name }}</div>
+                            <div class="text-muted small">
+                                <span class="fw-bold text-dark">{{ reg.registration_id }}</span> • 
+                                {{ reg.created_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        <a href="{% url 'accounts:view_registration_details' reg.registration_id %}" class="btn-view-reg">
+                            View Form
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="p-5 text-center rounded-4" style="background: #fafafa; border: 2px dashed #eee;">
+                        <p class="text-muted mb-0">No active registrations found.</p>
+                        <a href="{% url 'accounts:register' %}" class="small fw-bold text-primary text-decoration-none mt-2 d-inline-block">
+                            Find a Race →
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDetails() {
+    const details = document.getElementById('extraDetails');
+    const btn = document.getElementById('toggleBtn');
+    details.classList.toggle('active');
+    
+    if (details.classList.contains('active')) {
+        btn.innerHTML = 'Hide Details ▴';
+    } else {
+        btn.innerHTML = 'View Full Details ▾';
+    }
+}
+</script>
+{% endblock %}

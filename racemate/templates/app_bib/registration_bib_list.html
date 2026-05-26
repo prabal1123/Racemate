@@ -6,197 +6,178 @@
 {% block content %}
 <div class="container py-4">
 
-  <!-- HEADER -->
   <div class="card shadow-sm border-0 rounded-4 mb-4">
     <div class="card-body d-flex justify-content-between align-items-center">
-
       <div>
-        <h3 class="fw-bold mb-0">Bib List</h3>
-        <small class="text-muted">Manage registrations & bib assignments</small>
+        <h3 class="fw-bold mb-0">Bib & Collection Management</h3>
+        <small class="text-muted">Step 1: Assign Bibs & Mark Physical Arrival</small>
       </div>
 
       {% if request.user.is_staff %}
-      <form id="generate-bibs-form"
-            method="post"
-            action="{% url 'app_bib:generate_bibs' %}">
-        {% csrf_token %}
-        <input type="hidden" name="qs" value="{{ request.GET.urlencode }}">
-        <input type="hidden" name="next" value="{% url 'app_bib:registration_bib_list' %}">
-        <button id="generate-bibs-btn" type="submit" class="btn btn-primary rounded-3">
-          Generate Bibs
-        </button>
-      </form>
+      <div class="d-flex gap-2">
+        <a href="{% url 'app_bib:heat_list' %}" class="btn btn-outline-primary rounded-3">
+          <i class="bi bi-layers-half me-1"></i> Heat Assignment
+        </a>
+        <form id="generate-bibs-form" method="post" action="{% url 'app_bib:generate_bibs' %}">
+          {% csrf_token %}
+          <input type="hidden" name="qs" value="{{ request.GET.urlencode }}">
+          <input type="hidden" name="next" value="{% url 'app_bib:registration_bib_list' %}">
+          <button id="generate-bibs-btn" type="submit" class="btn btn-primary rounded-3 shadow-sm">
+            Generate All Bibs
+          </button>
+        </form>
+      </div>
       {% endif %}
     </div>
   </div>
 
-  <!-- FILTERS -->
   <div class="card shadow-sm border-0 rounded-4 mb-4">
     <div class="card-body">
       <form method="get" class="row g-3 align-items-end">
-
         <div class="col-md-3">
           <label class="form-label small text-muted">District</label>
           {{ filter.form.district_fk }}
         </div>
-
         <div class="col-md-2">
           <label class="form-label small text-muted">Gender</label>
           {{ filter.form.gender }}
         </div>
-
         <div class="col-md-3">
           <label class="form-label small text-muted">Age Group</label>
           {{ filter.form.age_group }}
         </div>
-
         <div class="col-md-4 d-flex gap-2">
-          <button type="submit" class="btn btn-primary rounded-3">
-            Apply
-          </button>
-
-          <a href="{% url 'app_bib:registration_bib_list' %}"
-             class="btn btn-outline-secondary rounded-3">
-            Reset
-          </a>
-
-          <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}export=csv"
-             class="btn btn-outline-success rounded-3">
-            Export CSV
+          <button type="submit" class="btn btn-primary rounded-3 px-4">Apply</button>
+          <a href="{% url 'app_bib:registration_bib_list' %}" class="btn btn-outline-secondary rounded-3">Reset</a>
+          <a href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}export=csv" class="btn btn-outline-success rounded-3">
+            <i class="bi bi-download me-1"></i> CSV
           </a>
         </div>
-
       </form>
     </div>
   </div>
 
-  <!-- TABLE -->
   <div class="card shadow-sm border-0 rounded-4">
     <div class="card-body p-0">
-
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-
           <thead class="table-light">
             <tr>
-              <th>Bib ID</th>
-              <th>Bib</th>
+              <th class="ps-4">Bib ID</th>
               <th>Name</th>
-              <th>District</th>
-              <th>Age</th>
+              <th>District / Age</th>
               <th>Gender</th>
-              <th>Bib Released</th>
+              <th class="text-center">Collection Status</th>
+              <th class="text-center pe-4">Physical Check-in</th>
             </tr>
           </thead>
-
           <tbody>
             {% if page_obj.object_list %}
               {% for reg in page_obj.object_list %}
               <tr>
-                <td class="fw-semibold">{{ reg.bib_id|default:"—" }}</td>
-
-                <td>
-                  <span class="badge bg-dark">
-                    {{ reg.bib_public }}
-                  </span>
+                <td class="ps-4">
+                    {% if reg.bib_id %}
+                        <code class="fw-bold text-primary">{{ reg.bib_id }}</code>
+                        <div class="badge bg-dark d-block mt-1" style="width: fit-content;">{{ reg.bib_public }}</div>
+                    {% else %}
+                        <span class="text-muted small italic">No Bib Assigned</span>
+                    {% endif %}
                 </td>
 
                 <td>
-                  {% if reg.pk %}
-                    <a href="{% url 'admin:accounts_registration_change' reg.pk %}"
-                       class="text-decoration-none fw-semibold">
-                      {{ reg.name|default:"(no name)" }}
-                    </a>
-                  {% else %}
-                    {{ reg.name|default:"(no name)" }}
-                  {% endif %}
+                  <div class="fw-bold">
+                    {% if reg.pk %}
+                        <a href="{% url 'admin:accounts_registration_change' reg.pk %}" class="text-decoration-none text-dark">
+                            {{ reg.name|default:"(no name)" }}
+                        </a>
+                    {% else %}
+                        {{ reg.name|default:"(no name)" }}
+                    {% endif %}
+                  </div>
+                  <small class="text-muted" style="font-size: 0.75rem;">ID: {{ reg.registration_id }}</small>
                 </td>
 
-                <td>{{ reg.district_fk.name|default:reg.district|default:"—" }}</td>
-
-                <td>{{ reg.age_display }}</td>
+                <td>
+                    <div class="small">{{ reg.district_fk.name|default:"—" }}</div>
+                    <span class="text-muted small">{{ reg.age_display }} yrs</span>
+                </td>
 
                 <td>
-                  <span class="badge bg-secondary">
+                  <span class="badge bg-secondary opacity-75">
                     {{ reg.get_gender_display|default:reg.gender|default:"—" }}
                   </span>
                 </td>
 
-                <td>
-                  {% if reg.bib_released_at %}
-                    <small class="text-muted">
-                      {{ reg.bib_released_at|naturaltime }}
-                    </small>
-                  {% else %}
-                    —
-                  {% endif %}
+                <td class="text-center">
+                    {% if reg.participation.is_collected %}
+                        <span class="badge bg-success shadow-sm px-3">
+                            <i class="bi bi-check-circle-fill me-1"></i> Selected
+                        </span>
+                    {% else %}
+                        <span class="badge bg-light text-muted border px-3">
+                            <i class="bi bi-hourglass-split me-1"></i> Pending
+                        </span>
+                    {% endif %}
+                </td>
+
+                <td class="text-center pe-4">
+                    <form action="{% url 'app_bib:toggle_collection' reg.id %}" method="POST">
+                        {% csrf_token %}
+                        {% if reg.participation.is_collected %}
+                            <button type="submit" class="btn btn-success btn-sm w-100 rounded-3 shadow-sm">
+                                <i class="bi bi-person-check-fill me-1"></i> Undo
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-outline-primary btn-sm w-100 rounded-3" 
+                                    {% if not reg.bib_id %}disabled title="Assign Bib first"{% endif %}>
+                                Mark Selected
+                            </button>
+                        {% endif %}
+                    </form>
                 </td>
               </tr>
               {% endfor %}
             {% else %}
               <tr>
-                <td colspan="7" class="text-center text-muted py-4">
+                <td colspan="6" class="text-center text-muted py-5">
                   No registrations found.
                 </td>
               </tr>
             {% endif %}
           </tbody>
-
         </table>
       </div>
-
     </div>
   </div>
 
-  <!-- PAGINATION -->
   {% if is_paginated %}
   <nav class="mt-4">
     <ul class="pagination justify-content-center">
-
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link"
-             href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
-            &laquo;
-          </a>
+          <a class="page-link rounded-3 me-1" href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">&laquo;</a>
         </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
       {% endif %}
 
       {% for p in paginator.page_range %}
         {% if p >= page_obj.number|add:-2 and p <= page_obj.number|add:2 %}
-          {% if p == page_obj.number %}
-            <li class="page-item active"><span class="page-link">{{ p }}</span></li>
-          {% else %}
-            <li class="page-item">
-              <a class="page-link"
-                 href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ p }}">
-                 {{ p }}
-              </a>
+            <li class="page-item {% if p == page_obj.number %}active{% endif %}">
+              <a class="page-link rounded-3 mx-1" href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ p }}">{{ p }}</a>
             </li>
-          {% endif %}
         {% endif %}
       {% endfor %}
 
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link"
-             href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
-            &raquo;
-          </a>
+          <a class="page-link rounded-3 ms-1" href="?{% if current_querystring %}{{ current_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">&raquo;</a>
         </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
       {% endif %}
-
     </ul>
   </nav>
   {% endif %}
 
 </div>
 
-<!-- CONFIRMATION JS (unchanged logic) -->
 <script>
 document.addEventListener("DOMContentLoaded", function(){
   const form = document.getElementById("generate-bibs-form");
@@ -221,5 +202,4 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 });
 </script>
-
 {% endblock %}

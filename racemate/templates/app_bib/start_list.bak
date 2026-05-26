@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Start List — Racemate{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">Start List</h2>
+
+  <div class="text-end mb-3">
+    <a href="{% url 'app_bib:start_list_export_csv' %}" class="btn btn-outline-primary btn-sm">
+      Export CSV
+    </a>
+  </div>
+
+  <div class="card p-3 shadow-sm">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Bib Number</th>
+          <th>Event</th>
+          <th>Gender</th>
+          <th>Age</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in registrations %}
+        <tr>
+          <td>{{ r.name }}</td>
+
+          {# short printable bib (computed in view) #}
+          <td>{{ r.bib_public }}</td>
+
+          {# event_display is computed in the view (handles M2M / FK / plain fields) #}
+          <td>{{ r.event_display }}</td>
+
+          {# keep gender formatting as before #}
+          <td>{{ r.gender|title }}</td>
+
+          {# use precomputed age_display (string) so template stays simple #}
+          <td>{{ r.age_display }}</td>
+
+          <td>{{ r.start_time|default:"—" }}</td>
+          <td>{{ r.end_time|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted">No participants found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

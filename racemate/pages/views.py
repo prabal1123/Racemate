@@ -105,4 +105,4 @@ def home(request):
         "arrow_icon": mark_safe(svg_arrow),
         # add other homepage context (hero, announcements) as needed
     }
-    return render(request, "pages/home.html", context)
+    return render(request, "accounts/home.html", context)
