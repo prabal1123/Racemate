@@ -420,3 +420,80 @@ main.site-content {
   color: #cbd5e1; /* soft light gray */
   font-size: 0.9rem;
 }
+/* ===============================
+   BOOTSTRAP BUTTON VARIANT OVERRIDES
+   (restores Bootstrap colors where variant classes
+   like btn-primary/btn-dark are explicitly used,
+   without touching the site-wide generic .btn style)
+================================= */
+.btn.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+.btn.btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+  opacity: 1;
+}
+
+.btn.btn-dark {
+  background-color: #212529;
+  border-color: #212529;
+  color: #fff;
+}
+.btn.btn-dark:hover {
+  background-color: #1c1f23;
+  border-color: #1a1e21;
+  opacity: 1;
+}
+
+.btn.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+  color: #fff;
+}
+.btn.btn-success:hover {
+  background-color: #157347;
+  border-color: #146c43;
+  opacity: 1;
+}
+
+.btn.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+
+.btn.btn-outline-dark {
+  background-color: transparent;
+  border-color: #212529;
+  color: #212529;
+}
+.btn.btn-outline-dark:hover {
+  background-color: #212529;
+  color: #fff;
+  opacity: 1;
+}
+
+.btn.btn-outline-primary {
+  background-color: transparent;
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+.btn.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+  opacity: 1;
+}
+
+.btn.btn-outline-secondary {
+  background-color: transparent;
+  border-color: #6c757d;
+  color: #6c757d;
+}
+.btn.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: #fff;
+  opacity: 1;
+}

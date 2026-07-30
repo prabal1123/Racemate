@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django_filters',
     'app_results',
     'app_races',
+    'app_tournaments',
 
     # auth/social
     'allauth',
@@ -95,8 +96,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # --- ALLAUTH & AUTH SETTINGS ---
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_SESSION_REMEMBER = True
 

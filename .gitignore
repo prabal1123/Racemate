@@ -13,3 +13,9 @@ ENV/
 
 # macOS
 .DS_Store
+
+# Django collectstatic output
+staticfiles/
+
+# Backup files
+*.bak

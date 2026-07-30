@@ -1,0 +1,110 @@
+Ye ho raha hai kyunki 4 action buttons (Edit/Dashboard/Generate/Results) d-flex flex-wrap ke andar hain aur row height bahut badi ho gayi hai (buttons stack ho gaye), jiski wajah se table itni wide ho gayi ki last column screen se bahar chala gaya. Fix karte hain — actions ko ek dropdown menu me daal denge (jaisa professional admin panels karte hain), row height bhi normal ho jaayegi aur table properly fit hoga.
+Poori file replace kar do:
+bash
+cat > templates/app_tournaments/tournament_category_list.html << 'EOF'
+{% extends "base.html" %}
+{% block title %}Tournament Categories{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cat-table td, .cat-table th {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    .cat-table td.wrap-cell {
+        white-space: normal;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Tournament Categories</h2>
+    </div>
+
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-auto">
+            <select name="tournament" class="form-select" onchange="this.form.submit()">
+                <option value="">All Tournaments</option>
+                {% for t in tournaments %}
+                <option value="{{ t.pk }}" {% if selected_tournament == t.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ t.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle cat-table mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Tournament</th>
+                    <th>Category</th>
+                    <th>Entry Format</th>
+                    <th>Fixture Type</th>
+                    <th>Scoring Rule</th>
+                    <th>Entry Fee</th>
+                    <th>Max Entries</th>
+                    <th>Reg. Open</th>
+                    <th>Active</th>
+                    <th>Fixtures Generated</th>
+                    <th style="width:70px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td class="wrap-cell">{{ cat.tournament.name }}</td>
+                    <td class="wrap-cell">{{ cat.category.name }}</td>
+                    <td>{{ cat.entry_format.name }}</td>
+                    <td>{{ cat.get_fixture_type_display }}</td>
+                    <td class="wrap-cell">{{ cat.scoring_rule|default:"—" }}</td>
+                    <td>{{ cat.entry_fee }}</td>
+                    <td>{{ cat.maximum_entries|default:"—" }}</td>
+                    <td>
+                        {% if cat.registration_open %}
+                            <span class="badge bg-success">Open</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Closed</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if cat.is_active %}
+                            <span class="badge bg-success">Yes</span>
+                        {% else %}
+                            <span class="badge bg-secondary">No</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if cat.fixtures_generated_at %}
+                            {{ cat.fixtures_generated_at|date:"M d, Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">Not yet</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'app_tournaments:tournament_category_edit' cat.pk %}">Edit</a></li>
+                                <li><a class="dropdown-item" href="{% url 'app_tournaments:fixture_dashboard' cat.pk %}">Fixture Dashboard</a></li>
+                                {% if not cat.fixtures_generated_at %}
+                                <li><a class="dropdown-item" href="{% url 'app_tournaments:generate_fixtures' cat.pk %}">Generate Fixtures</a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{% url 'app_tournaments:results' cat.pk %}">Results</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="11" class="text-center text-muted">No tournament categories found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

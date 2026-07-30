@@ -93,4 +93,11 @@ urlpatterns = [
     path('api/send-otp/', api_views.SendEmailOTPAPIView.as_view(), name='send_otp'),
     path('api/verify-otp/', api_views.VerifyEmailOTPAPIView.as_view(), name='verify_otp'),
     path('api/profile/', UserProfileAPIView.as_view(), name='api-profile'),
+
+    # Add these two lines to accounts/urls.py, inside urlpatterns,
+# near the existing ajax_load_districts path.
+
+    path('ajax/tournament-categories/', views.ajax_tournament_categories, name='ajax_tournament_categories'),
+    path('ajax/partner-search/', views.ajax_partner_search, name='ajax_partner_search'),
 ]
+

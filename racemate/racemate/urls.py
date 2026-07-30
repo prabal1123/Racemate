@@ -51,4 +51,8 @@ urlpatterns = [
     path("results/", include(("app_results.urls", "app_results"), namespace="app_results")), # Consistent naming
     path("api/races/", include("app_races.urls")),
     path("pages/", include("pages.urls")), # Removed from root "" to prevent recursion with home
+        path(
+        'tournaments/',
+        include('app_tournaments.urls'),   # ← ye naya line add karo
+    ),
 ]

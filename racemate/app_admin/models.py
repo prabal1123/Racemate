@@ -75,3 +75,14 @@ class Event(models.Model):
         return self.name
 
 
+# class Sport(models.Model):
+#     name = models.CharField(max_length=50, unique=True)   # e.g. 'running'
+    
+
+#     class Meta:
+#         verbose_name = "Sport"
+#         verbose_name_plural = "Sports"
+#         ordering = ["name"]
+
+#     def __str__(self):
+#         return self.name

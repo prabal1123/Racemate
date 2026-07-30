@@ -15,10 +15,39 @@
       Registration Successful!
     </h2>
 
-    <p class="text-muted mb-4">
-      You are now registered for <br>
-      <span class="fw-bold text-dark">{{ registration.race.name }}</span>
-    </p>
+    {% if registration.registration_type == 'tournament' %}
+
+      <p class="text-muted mb-4">
+        Your tournament entries have been submitted.
+      </p>
+
+      <div class="p-3 mb-4 rounded-3 text-start" style="background-color: #f8f9fa; border: 1px dashed #28a745;">
+        <p class="small text-uppercase text-muted mb-2 fw-bold text-center">Entries Submitted</p>
+        {% for entry in registration.tournament_entries.all %}
+          <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+            <div>
+              <div class="fw-bold text-dark">{{ entry.tournament_category.tournament.name }}</div>
+              <div class="small text-muted">{{ entry.tournament_category.category.name }} — {{ entry.tournament_category.entry_format.name }}</div>
+            </div>
+            <span class="badge bg-warning text-dark">{{ entry.status.name }}</span>
+          </div>
+        {% empty %}
+          <p class="text-muted small mb-0">No entries found.</p>
+        {% endfor %}
+      </div>
+
+      <p class="text-muted small mb-4">
+        All entries are <strong>Pending</strong> until reviewed and approved by the tournament organizers.
+      </p>
+
+    {% else %}
+
+      <p class="text-muted mb-4">
+        You are now registered for <br>
+        <span class="fw-bold text-dark">{{ registration.race.name }}</span>
+      </p>
+
+    {% endif %}
 
     <div class="p-3 mb-4 rounded-3" style="background-color: #f8f9fa; border: 1px dashed #28a745;">
       <p class="small text-uppercase text-muted mb-1 fw-bold">Your Registration ID</p>
@@ -52,4 +81,4 @@
 
   </div>
 </div>
-{% endblock %}
+{% endblock %} 

@@ -415,12 +415,28 @@
   .flatpickr-input {
     background: #fff !important;
   }
+
+  /* --- Registration type toggle (Race / Tournament) --- */
+  .btn-check:checked + .btn-outline-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+
+  /* --- Partner search --- */
+  .partner-search-results {
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .partner-search-results:empty {
+    display: none;
+  }
 </style>
 
 <!-- Hero -->
 <div class="reg-hero">
   <h1>Athlete <span>Registration</span></h1>
-  <p>Fill in your details and choose your race events below</p>
+  <p>Fill in your details and choose your race or tournament below</p>
 </div>
 
 <div class="container py-5">
@@ -546,71 +562,165 @@
           </div>
         </div>
 
-        <!-- Section 3: Race & Events -->
+        <!-- Section 3: Participation Selection (Race OR Tournament) -->
         <div class="reg-card mb-4">
           <div class="reg-section-header">
             <div class="step-num">3</div>
-            <h5>Race & Event Selection</h5>
+            <h5>Participation Selection</h5>
           </div>
           <div class="reg-section-body">
 
-            <div class="mb-4 race-select-wrap">
-              <label class="form-label">Select Race</label>
-              <select name="race" id="id_race_selection" class="form-select" required>
-                <option value="" disabled selected>— Choose a Race —</option>
-                {% for race in active_races %}
-                  <option value="{{ race.id }}"
-                    {% if preselected_race_id == race.id|stringformat:"i" %}selected{% endif %}>
-                    {{ race.name }} ({{ race.location }})
-                  </option>
-                {% endfor %}
-              </select>
+            <div class="mb-4">
+              <label class="form-label d-block mb-2">I want to register for</label>
+              <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="registration_type" id="regtype_race" value="race" checked>
+                <label class="btn btn-outline-primary" for="regtype_race">Race</label>
+
+                <input type="radio" class="btn-check" name="registration_type" id="regtype_tournament" value="tournament">
+                <label class="btn btn-outline-primary" for="regtype_tournament">Tournament</label>
+              </div>
             </div>
 
-            <div id="events_container">
-              <label class="form-label mb-3">Select Event Categories</label>
-              <p class="text-muted small mb-3">Tick one or more events you want to participate in.</p>
+            <!-- ===================== RACE PANEL ===================== -->
+            <div id="race_panel">
+              <div class="mb-4 race-select-wrap">
+                <label class="form-label">Select Race</label>
+                <select name="race" id="id_race_selection" class="form-select">
+                  <option value="" disabled selected>— Choose a Race —</option>
+                  {% for race in active_races %}
+                    <option value="{{ race.id }}"
+                      {% if preselected_race_id == race.id|stringformat:"i" %}selected{% endif %}>
+                      {{ race.name }} ({{ race.location }})
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
 
-              {% for race in active_races %}
-                <div class="race-events-group" id="events_for_race_{{ race.id }}" style="display:none;">
-                  <div class="row g-3">
-                    {% for event in race.events.all %}
-                      <div class="col-md-6">
-                        <div class="event-card-checkbox">
-                          <input type="checkbox" name="selected_events" value="{{ event.id }}"
-                                 id="event_{{ event.id }}" class="event-input">
-                          <label for="event_{{ event.id }}" class="event-label-card">
-                            <div class="d-flex align-items-start gap-2">
-                              <div class="event-check-icon mt-1"></div>
-                              <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-center">
-                                  <span class="event-title">{{ event.title }}</span>
-                                  <span class="event-price">₹{{ event.price }}</span>
+              <div id="events_container">
+                <label class="form-label mb-3">Select Event Categories</label>
+                <p class="text-muted small mb-3">Tick one or more events you want to participate in.</p>
+
+                {% for race in active_races %}
+                  <div class="race-events-group" id="events_for_race_{{ race.id }}" style="display:none;">
+                    <div class="row g-3">
+                      {% for event in race.events.all %}
+                        <div class="col-md-6">
+                          <div class="event-card-checkbox">
+                            <input type="checkbox" name="selected_events" value="{{ event.id }}"
+                                   id="event_{{ event.id }}" class="event-input">
+                            <label for="event_{{ event.id }}" class="event-label-card">
+                              <div class="d-flex align-items-start gap-2">
+                                <div class="event-check-icon mt-1"></div>
+                                <div class="flex-grow-1">
+                                  <div class="d-flex justify-content-between align-items-center">
+                                    <span class="event-title">{{ event.title }}</span>
+                                    <span class="event-price">₹{{ event.price }}</span>
+                                  </div>
+                                  {% if event.distance_km %}
+                                    <div class="event-distance">{{ event.distance_km }} KM</div>
+                                  {% endif %}
                                 </div>
-                                {% if event.distance_km %}
-                                  <div class="event-distance">{{ event.distance_km }} KM</div>
-                                {% endif %}
                               </div>
-                            </div>
-                          </label>
+                            </label>
+                          </div>
+                        </div>
+                      {% empty %}
+                        <div class="col-12">
+                          <p class="text-muted small">No events available for this race yet.</p>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <!-- =================== END RACE PANEL ==================== -->
+
+            <!-- =================== TOURNAMENT PANEL ==================== -->
+            <div id="tournament_panel" style="display:none;">
+              <label class="form-label mb-2">Select Tournament(s)</label>
+              <p class="text-muted small mb-3">Check one or more tournaments, then tick the categories you want to enter under each.</p>
+
+              {% for t in active_tournaments %}
+                <div class="mb-4">
+                  <div class="event-card-checkbox mb-3">
+                    <input type="checkbox" name="selected_tournaments" value="{{ t.id }}"
+                           id="tournament_{{ t.id }}" class="event-input tournament-toggle" data-target="tournament_categories_{{ t.id }}">
+                    <label for="tournament_{{ t.id }}" class="event-label-card">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="event-check-icon"></div>
+                        <div>
+                          <span class="event-title">{{ t.name }}</span>
+                          <div class="event-distance">{{ t.venue }}</div>
                         </div>
                       </div>
-                    {% empty %}
-                      <div class="col-12">
-                        <p class="text-muted small">No events available for this race yet.</p>
-                      </div>
-                    {% endfor %}
+                    </label>
+                  </div>
+
+                  <div class="tournament-categories-group" id="tournament_categories_{{ t.id }}" style="display:none; padding-left: 16px; border-left: 3px solid var(--border);">
+                    <div class="row g-3">
+                      {% for c in t.categories.all %}
+                        {% if c.is_active and c.registration_open %}
+                          <div class="col-md-6">
+                            <div class="event-card-checkbox">
+                              <input type="checkbox" name="selected_tournament_categories" value="{{ c.id }}"
+                                     id="category_{{ c.id }}" class="event-input category-toggle"
+                                     data-partner-target="partner_slots_cat_{{ c.id }}">
+                              <label for="category_{{ c.id }}" class="event-label-card">
+                                <div class="d-flex align-items-start gap-2">
+                                  <div class="event-check-icon mt-1"></div>
+                                  <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                      <span class="event-title">{{ c.category.name }}</span>
+                                      <span class="event-price">₹{{ c.entry_fee }}</span>
+                                    </div>
+                                    <div class="event-distance">{{ c.entry_format.name }}</div>
+                                  </div>
+                                </div>
+                              </label>
+                            </div>
+
+                            {% if c.partner_positions %}
+                              <div class="partner-slots-block mt-2 p-3 border rounded" id="partner_slots_cat_{{ c.id }}" style="display:none;">
+                                <label class="form-label mb-1">Partner details for {{ c.category.name }}</label>
+                                <p class="text-muted small mb-2">Search by name/email, or type details manually.</p>
+                                {% for pos in c.partner_positions %}
+                                  <div class="mb-3">
+                                    <label class="form-label small">Partner {{ pos|add:"-1" }}</label>
+                                    <input type="text" class="form-control partner-search-input" placeholder="Start typing…" autocomplete="off"
+                                           data-hidden-target="partner_email_hidden_{{ c.id }}_{{ pos }}">
+                                    <div class="partner-search-results list-group mt-1" data-results-for="partner_email_hidden_{{ c.id }}_{{ pos }}"></div>
+                                    <input type="hidden" id="partner_email_hidden_{{ c.id }}_{{ pos }}" name="partner_email_{{ c.id }}_{{ pos }}">
+                                    <div class="row g-2 mt-2">
+                                      <div class="col-md-6">
+                                        <input type="text" class="form-control" name="partner_name_manual_{{ c.id }}_{{ pos }}" placeholder="Full name">
+                                      </div>
+                                      <div class="col-md-6">
+                                        <input type="email" class="form-control" name="partner_email_manual_{{ c.id }}_{{ pos }}" placeholder="Email">
+                                      </div>
+                                    </div>
+                                  </div>
+                                {% endfor %}
+                              </div>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% empty %}
+                        <div class="col-12"><p class="text-muted small">No categories open for registration in this tournament yet.</p></div>
+                      {% endfor %}
+                    </div>
                   </div>
                 </div>
+              {% empty %}
+                <p class="text-muted small">No tournaments currently open for registration.</p>
               {% endfor %}
             </div>
+            <!-- ================= END TOURNAMENT PANEL =================== -->
 
           </div>
         </div>
 
-        <!-- ============================================================
-             Section 4: Communication Preferences  (NEW)
-             ============================================================ -->
+        <!-- Section 4: Communication Preferences -->
         <div class="reg-card mb-4">
           <div class="reg-section-header">
             <div class="step-num">4</div>
@@ -618,10 +728,6 @@
           </div>
           <div class="reg-section-body">
 
-            <!--
-              The real checkbox is hidden; the styled toggle label drives it.
-              "checked" by default → user receives email unless they opt out.
-            -->
             <input
               type="checkbox"
               name="receive_confirmation_email"
@@ -631,17 +737,14 @@
             <label for="receive_confirmation_email">
               <div class="email-pref-toggle">
 
-                <!-- Toggle switch visual -->
                 <div class="toggle-switch" aria-hidden="true">
                   <div class="toggle-track">
                     <div class="toggle-thumb"></div>
                   </div>
                 </div>
 
-                <!-- Icon -->
                 <div class="pref-icon">✉️</div>
 
-                <!-- Text -->
                 <div class="flex-grow-1">
                   <div class="pref-title">Confirmation Email</div>
                   <div class="pref-status">
@@ -658,7 +761,6 @@
 
           </div>
         </div>
-        <!-- ============================================================ -->
 
         <!-- Submit -->
         <button type="submit" class="btn-register">
@@ -747,6 +849,80 @@ document.addEventListener('DOMContentLoaded', function () {
   raceSelect.addEventListener('change', updateEvents);
   if (raceSelect.value) updateEvents();
 
+  // ── 3b. Race/Tournament Toggle ───────────────────────────────────────
+  const regtypeRadios   = document.querySelectorAll('input[name="registration_type"]');
+  const racePanel       = document.getElementById('race_panel');
+  const tournamentPanel = document.getElementById('tournament_panel');
+
+  function applyRegType() {
+    const checked = document.querySelector('input[name="registration_type"]:checked').value;
+    racePanel.style.display       = checked === 'race' ? 'block' : 'none';
+    tournamentPanel.style.display = checked === 'tournament' ? 'block' : 'none';
+  }
+  regtypeRadios.forEach(r => r.addEventListener('change', applyRegType));
+  applyRegType();
+
+  // ── 3c. Tournament checkbox → show/hide its categories group ────────
+  // Mirrors the race → events pattern: everything is already rendered
+  // server-side, JS just toggles visibility. Multiple tournaments can
+  // be checked at once.
+  document.querySelectorAll('.tournament-toggle').forEach(cb => {
+    cb.addEventListener('change', function () {
+      const target = document.getElementById(this.dataset.target);
+      if (target) target.style.display = this.checked ? 'block' : 'none';
+      // Unchecking a tournament un-checks its categories + hides their partner slots
+      if (!this.checked && target) {
+        target.querySelectorAll('.category-toggle').forEach(catCb => {
+          catCb.checked = false;
+          const partnerBlock = document.getElementById(catCb.dataset.partnerTarget);
+          if (partnerBlock) partnerBlock.style.display = 'none';
+        });
+      }
+    });
+  });
+
+  // ── 3d. Category checkbox → show/hide its partner-slots block ───────
+  document.querySelectorAll('.category-toggle').forEach(cb => {
+    cb.addEventListener('change', function () {
+      const partnerBlock = document.getElementById(this.dataset.partnerTarget);
+      if (partnerBlock) partnerBlock.style.display = this.checked ? 'block' : 'none';
+    });
+  });
+
+  // ── 3e. Partner search — works for any number of partner slots across
+  // any number of checked categories, keyed by each slot's own hidden field id
+  document.querySelectorAll('.partner-search-input').forEach(input => {
+    let debounceTimer;
+    input.addEventListener('input', function () {
+      clearTimeout(debounceTimer);
+      const query = this.value.trim();
+      const hiddenTargetId = this.dataset.hiddenTarget;
+      const resultsBox = document.querySelector(`.partner-search-results[data-results-for="${hiddenTargetId}"]`);
+
+      if (query.length < 2) { resultsBox.innerHTML = ''; return; }
+
+      debounceTimer = setTimeout(() => {
+        fetch("{% url 'accounts:ajax_partner_search' %}?q=" + encodeURIComponent(query))
+          .then(r => r.json())
+          .then(data => {
+            resultsBox.innerHTML = '';
+            data.results.forEach(p => {
+              const item = document.createElement('button');
+              item.type = 'button';
+              item.className = 'list-group-item list-group-item-action';
+              item.textContent = `${p.name} (${p.email})`;
+              item.addEventListener('click', () => {
+                input.value = `${p.name} (${p.email})`;
+                document.getElementById(hiddenTargetId).value = p.email;
+                resultsBox.innerHTML = '';
+              });
+              resultsBox.appendChild(item);
+            });
+          });
+      }, 300);
+    });
+  });
+
   // ── 4. Date Picker ──────────────────────────────────────────────────
   flatpickr("#id_date_of_birth", {
     dateFormat: "Y-m-d",
@@ -756,9 +932,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ── 5. Email preference toggle — keep thumb in sync ─────────────────
-  // The CSS :checked sibling selector handles most visual updates.
-  // This block ensures the toggle-thumb inside the label moves correctly
-  // because the thumb is a child of the label, not a CSS sibling.
   const emailPrefCheckbox = document.getElementById('receive_confirmation_email');
   const toggleThumb       = document.querySelector('.toggle-thumb');
   const toggleTrack       = document.querySelector('.toggle-track');
@@ -774,7 +947,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   emailPrefCheckbox.addEventListener('change', syncToggle);
-  syncToggle(); // run once on load to set initial state
+  syncToggle();
 
 });
 </script>

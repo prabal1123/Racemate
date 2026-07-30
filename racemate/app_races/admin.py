@@ -1,50 +1,3 @@
-# from django.contrib import admin
-# from .models import Race, RaceRegistration
-# from .models import Race, Heat
-
-# @admin.register(Race)
-# class RaceAdmin(admin.ModelAdmin):
-#     # This shows these columns in the admin list view
-#     list_display = ('name', 'location', 'race_start', 'get_rider_count', 'status')
-
-#     def get_rider_count(self, obj):
-#         return obj.registrations.count()
-#     get_rider_count.short_description = 'Registered Riders'
-
-# admin.site.register(RaceRegistration)
-
-# @admin.register(Heat)
-# class HeatAdmin(admin.ModelAdmin):
-#     list_display = ('name', 'race', 'actual_start_time')
-#     list_filter = ('race',)
-
-
-# from django.contrib import admin
-# from .models import Race, RaceRegistration
-
-# # --- ADMIN CLASSES ---
-
-# @admin.register(Race)
-# class RaceAdmin(admin.ModelAdmin):
-#     list_display = ('name', 'location', 'race_start', 'get_rider_count', 'status')
-#     search_fields = ('name', 'location')
-#     list_filter = ('race_start',)
-#     # REMOVED: inlines = [HeatInline] (Heats are now just numbers on the athletes)
-
-#     def get_rider_count(self, obj):
-#         return obj.race_registrations.count()
-#     get_rider_count.short_description = 'Registered Riders'
-
-
-# # REMOVED: @admin.register(Heat) class HeatAdmin (This model no longer exists)
-
-
-# @admin.register(RaceRegistration)
-# class RaceRegistrationAdmin(admin.ModelAdmin):
-#     list_display = ('participant', 'race', 'created_at')
-#     list_filter = ('race', 'created_at')
-#     # search_fields uses double underscore to look into the linked Registration model
-#     search_fields = ('participant__name', 'race__name')
 
 from django.contrib import admin
 from .models import Race, Event, RaceRegistration
@@ -77,6 +30,33 @@ class EventAdmin(admin.ModelAdmin):
     list_filter = ('race',)
     search_fields = ('title', 'race__name')
 
+# @admin.register(DoublesEntry)
+# class DoublesEntryAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'event',
+#         'player_one',
+#         'player_two',
+#         'created_at',
+#     )
+
+#     list_filter = (
+#         'event__race',
+#         'event',
+#         'created_at',
+#     )
+
+#     search_fields = (
+#         'player_one__name',
+#         'player_two__name',
+#         'event__title',
+#         'event__race__name',
+#     )
+
+#     autocomplete_fields = (
+#         'event',
+#         'player_one',
+#         'player_two',
+#     )
 
 @admin.register(RaceRegistration)
 class RaceRegistrationAdmin(admin.ModelAdmin):

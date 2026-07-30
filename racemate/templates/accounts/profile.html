@@ -137,17 +137,47 @@
             <div class="mt-4">
                 {% if registrations %}
                     {% for reg in registrations %}
-                    <div class="reg-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-bold mb-1" style="font-size: 16px; color: #111;">{{ reg.race.name }}</div>
-                            <div class="text-muted small">
-                                <span class="fw-bold text-dark">{{ reg.registration_id }}</span> • 
-                                {{ reg.created_at|date:"M d, Y" }}
+                    <div class="reg-item">
+                        {% if reg.registration_type == 'tournament' %}
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-bold mb-1" style="font-size: 16px; color: #111;">Tournament Registration</div>
+                                    <div class="text-muted small mb-2">
+                                        <span class="fw-bold text-dark">{{ reg.registration_id }}</span> •
+                                        {{ reg.created_at|date:"M d, Y" }}
+                                    </div>
+                                </div>
+                                <a href="{% url 'accounts:view_registration_details' reg.registration_id %}" class="btn-view-reg">
+                                    View Form
+                                </a>
                             </div>
-                        </div>
-                        <a href="{% url 'accounts:view_registration_details' reg.registration_id %}" class="btn-view-reg">
-                            View Form
-                        </a>
+                            {% if reg.tournament_entries.all %}
+                                <div class="mt-2 ps-2" style="border-left: 3px solid var(--sport-blue);">
+                                    {% for entry in reg.tournament_entries.all %}
+                                        <div class="d-flex justify-content-between align-items-center py-1">
+                                            <div class="small">
+                                                <span class="fw-bold text-dark">{{ entry.tournament_category.tournament.name }}</span>
+                                                — {{ entry.tournament_category.category.name }}
+                                            </div>
+                                            <span class="badge bg-warning text-dark">{{ entry.status.name }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold mb-1" style="font-size: 16px; color: #111;">{{ reg.race.name }}</div>
+                                    <div class="text-muted small">
+                                        <span class="fw-bold text-dark">{{ reg.registration_id }}</span> •
+                                        {{ reg.created_at|date:"M d, Y" }}
+                                    </div>
+                                </div>
+                                <a href="{% url 'accounts:view_registration_details' reg.registration_id %}" class="btn-view-reg">
+                                    View Form
+                                </a>
+                            </div>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 {% else %}

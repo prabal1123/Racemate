@@ -28,6 +28,25 @@
         </div>
       </div>
 
+      <div class="rm-dd-wrap {% if namespace == 'app_tournaments' %}rm-active{% endif %}">
+        <button class="rm-link rm-dd-trigger" id="tournaments-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+          Tournaments ▾
+        </button>
+        <div class="rm-dd-menu" id="tournaments-menu" role="menu">
+          <a class="rm-dd-item" href="{% url 'app_tournaments:tournament_list' %}">All Tournaments</a>
+          <a class="rm-dd-item" href="{% url 'app_tournaments:tournament_create' %}">+ Create Tournament</a>
+          <hr class="rm-dd-sep">
+          <a class="rm-dd-item" href="{% url 'admin:app_tournaments_tournament_changelist' %}">Tournaments (admin)</a>
+          <a class="rm-dd-item" href="{% url 'app_tournaments:tournament_category_list' %}">Categories</a>
+          <a class="rm-dd-item" href="{% url 'app_tournaments:tournament_entry_list' %}">Entries</a>
+          <a class="rm-dd-item" href="{% url 'app_tournaments:match_list' %}">Matches</a>
+          <a class="rm-dd-item" href="{% url 'admin:app_tournaments_court_changelist' %}">Courts</a>
+          <hr class="rm-dd-sep">
+          <a class="rm-dd-item" href="{% url 'admin:app_tournaments_scoringrule_changelist' %}">Scoring Rules</a>
+          <a class="rm-dd-item" href="{% url 'admin:app_tournaments_matchstatus_changelist' %}">Match Statuses</a>
+        </div>
+      </div>
+
       <a href="{% url 'analysis_dashboard' %}" class="rm-link {% if name == 'analysis_dashboard' %}rm-active{% endif %}">Analysis Dashboard</a>
     </div>
     {% endif %}
@@ -76,6 +95,16 @@
           <li><a href="{% url 'admin:index' %}" class="rm-mobile-link">Admin Dashboard</a></li>
           <li><a href="{% url 'app_bib:heat_list' %}" class="rm-mobile-link">Heat List</a></li>
           <li><a href="{% url 'analysis_dashboard' %}" class="rm-mobile-link">Analysis Dashboard</a></li>
+          <li class="rm-mobile-hr"></li>
+
+          <li class="rm-mobile-label">Tournaments</li>
+          <li><a href="{% url 'app_tournaments:tournament_list' %}" class="rm-mobile-link">All Tournaments</a></li>
+          <li><a href="{% url 'app_tournaments:tournament_create' %}" class="rm-mobile-link">+ Create Tournament</a></li>
+          <li><a href="{% url 'admin:app_tournaments_tournament_changelist' %}" class="rm-mobile-link">Tournaments (admin)</a></li>
+          <li><a href="{% url 'app_tournaments:tournament_category_list' %}" class="rm-mobile-link">Categories</a></li>
+          <li><a href="{% url 'app_tournaments:tournament_entry_list' %}" class="rm-mobile-link">Entries</a></li>
+          <li><a href="{% url 'app_tournaments:match_list' %}" class="rm-mobile-link">Matches</a></li>
+          <li><a href="{% url 'admin:app_tournaments_court_changelist' %}" class="rm-mobile-link">Courts</a></li>
           <li class="rm-mobile-hr"></li>
         {% endif %}
 
