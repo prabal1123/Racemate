@@ -1,265 +1,5 @@
 
 
-# from .forms import UserProfileForm
-# # accounts/views.py
-# from django.shortcuts import render, redirect, get_object_or_404
-# from django.contrib import messages
-# from django.urls import reverse
-# from django.http import JsonResponse
-# from django.views.decorators.http import require_GET
-# from django.contrib.auth.decorators import login_required
-# from django.contrib.auth import authenticate, login
-# from django.utils.safestring import mark_safe
-# from app_races.models import Race, Event, RaceRegistration
-# from django.contrib.auth.models import User
-# from django import forms
-
-# from .models import Registration
-# from .forms import RegistrationForm
-# from app_admin.models import DimDistrict, DimState
-# from django.shortcuts import render
-# from .models import Profile
-# from app_races.models import Race
-# from django.utils import timezone
-
-# def home(request):
-#     """
-#     Homepage: Real Race Data + Hero + Results
-#     """
-#     # --- SVG ICONS (Kept as is) ---
-#     svg_register = '''<svg>...</svg>'''
-#     svg_login = '''<svg>...</svg>'''
-    
-#     # --- FETCH REAL DATA ---
-#     # We fetch all races ordered by the start date
-#     # .prefetch_related('registrations') makes the rider count query much faster
-#     # db_races = Race.objects.all().prefetch_related('registrations').order_by('race_start')
-#     # Use 'race_registrations' (plural) as defined in your updated RaceRegistration model
-#     # db_races = Race.objects.all().prefetch_related('race_registrations').order_by('race_start')
-
-#     now = timezone.now() 
-#     db_races = Race.objects.all().prefetch_related('race_registrations', 'events').order_by('race_start')
-
-#     # --- DUMMY RESULTS (Keep until you create a Results model) ---
-#     recent_results = [
-#         {"event": "Table Mountain Time Trial", "date": "Feb 28, 2026", "results": [{"name": "Liam Jacobs", "time": "2h 14m 32s"}, {"name": "Thabo Molefe", "time": "2h 16m 08s"}, {"name": "Sarah van Niekerk", "time": "2h 18m 45s"}]},
-#         {"event": "Winelands Classic", "date": "Feb 15, 2026", "results": [{"name": "Nina Botha", "time": "3h 02m 11s"}, {"name": "Chris Dlamini", "time": "3h 04m 50s"}, {"name": "James Le Roux", "time": "3h 07m 22s"}]},
-#         {"event": "Midlands Meander MTB", "date": "Jan 25, 2026", "results": [{"name": "Ethan Pretorius", "time": "4h 31m 09s"}, {"name": "Zanele Nkosi", "time": "4h 35m 44s"}, {"name": "Pieter du Toit", "time": "4h 38m 01s"}]},
-#     ]
-
-#     context = {
-#         "races": db_races,  # Passing the real QuerySet now
-#         "recent_results": recent_results,
-#         "now": now, # Pass current time to template for status logic
-#     }
-#     return render(request, "accounts/home.html", context)
-
-
-# # --- NEW TRAFFIC CONTROLLER ---
-# @login_required
-# def check_profile_completion(request):
-#     """
-#     Traffic controller: 
-#     Checks both User and Profile models, then sends the user to the right place.
-#     """
-#     user = request.user
-    
-#     # 1. Get or create the profile (Safety check)
-#     profile, created = Profile.objects.get_or_create(user=user)
-
-#     # 2. Check for missing mandatory info
-#     # We check the User model AND the Profile model phone number
-#     if not user.first_name or not user.last_name or not profile.phone_number:
-#         messages.info(request, "Almost there! Please complete your profile details.")
-#         return redirect('accounts:profile_edit') 
-
-#     # 3. If everything is complete, send them to their new Profile Page
-#     return redirect('accounts:profile')# --- REMAINING VIEWS ---
-
-
-
-# def register(request):
-#     """
-#     Handles race registration for multiple events while maintaining
-#     a single Bib/Registration ID. Sends confirmation email on success.
-#     """
-#     now = timezone.now()
-#     active_races = Race.objects.filter(
-#         registration_start__lte=now,
-#         race_start__gte=now.date()
-#     ).prefetch_related('events')
-
-#     if request.method == 'POST':
-#         form = RegistrationForm(request.POST, request.FILES)
-#         selected_event_ids = request.POST.getlist('selected_events')
-
-#         if not selected_event_ids:
-#             messages.error(request, "Please select at least one event category.")
-#             states = DimState.objects.all().order_by('name')
-#             return render(request, 'accounts/register.html', {
-#                 'form': form,
-#                 'states': states,
-#                 'active_races': active_races
-#             })
-
-#         if form.is_valid():
-#             reg = form.save(commit=False)
-
-#             try:
-#                 first_event = Event.objects.get(id=selected_event_ids[0])
-#                 reg.race = first_event.race
-#                 reg.save()
-#                 form.save_m2m()
-
-#                 for event_id in selected_event_ids:
-#                     event_obj = Event.objects.get(id=event_id)
-#                     RaceRegistration.objects.get_or_create(
-#                         participant=reg,
-#                         event=event_obj,
-#                         race=event_obj.race
-#                     )
-
-#                 # Send confirmation email
-#                 from .email_utils import send_registration_confirmation
-#                 send_registration_confirmation(reg, request)
-
-#                 messages.success(request, f"Registration for {reg.race.name} submitted!")
-#                 return redirect(reverse('accounts:registration_success') + f'?reg_id={reg.registration_id}')
-
-#             except Event.DoesNotExist:
-#                 messages.error(request, "One of the selected events is invalid.")
-#                 return redirect('accounts:register')
-#         else:
-#             messages.error(request, "Please correct the errors below.")
-#     else:
-#         form = RegistrationForm()
-
-#     preselected_race_id = request.GET.get('race_id')
-#     states = DimState.objects.all().order_by('name')
-
-#     return render(request, 'accounts/register.html', {
-#         'form': form,
-#         'states': states,
-#         'active_races': active_races,
-#         'preselected_race_id': preselected_race_id
-#     })
-
-# @require_GET
-# def ajax_load_districts(request):
-#     state_id = request.GET.get('state_id') or request.GET.get('state')
-#     if not state_id: return JsonResponse({'error': 'state_id required'}, status=400)
-#     districts = DimDistrict.objects.filter(state_id=state_id).order_by('name')
-#     result = [{'id': d.id, 'name': d.name} for d in districts]
-#     return JsonResponse({'districts': result})
-
-# @login_required
-# def profile(request):
-#     user = request.user
-#     registrations = Registration.objects.filter(email=user.email).order_by('-created_at')
-#     return render(request, 'accounts/profile.html', {'registrations': registrations, 'user': user})
-
-# @login_required
-# def registration_edit(request, pk):
-#     reg = get_object_or_404(Registration, pk=pk)
-#     if request.method == 'POST':
-#         form = RegistrationForm(request.POST, request.FILES, instance=reg)
-#         if form.is_valid():
-#             form.save()
-#             messages.success(request, "Registration updated successfully.")
-#             return redirect(reverse('accounts:profile'))
-#         else:
-#             messages.error(request, "Please correct the errors below.")
-#     else:
-#         form = RegistrationForm(instance=reg)
-#     return render(request, 'accounts/registration_edit.html', {'form': form, 'reg': reg})
-
-# def viewLogin(request):
-#     if request.method == 'POST':
-#         username = request.POST.get('username')
-#         password = request.POST.get('password')
-#         user = authenticate(request, username=username, password=password)
-#         if user:
-#             login(request, user)
-#             return redirect('accounts:check_profile')
-#         messages.error(request, 'Invalid username or password')
-#     return render(request, 'accounts/login.html')
-
-# # def registration_success(request):
-# #     return render(request, 'accounts/registration_success.html')
-
-# def registration_success(request):
-#     # Get the ID from the URL query parameters
-#     reg_id = request.GET.get('reg_id')
-#     registration = None
-    
-#     if reg_id:
-#         # Fetch the specific registration using the new registration_id field
-#         registration = get_object_or_404(Registration, registration_id=reg_id)
-        
-#     return render(request, 'accounts/registration_success.html', {
-#         'registration': registration
-#     })
-
-
-# # @login_required
-# # def profile_view(request):
-# #     # This prevents the "RelatedObjectDoesNotExist" error by creating the row if missing
-# #     profile, created = Profile.objects.get_or_create(user=request.user)
-# #     return render(request, 'accounts/profile.html', {'profile': profile})
-
-# @login_required
-# def profile_view(request):
-#     profile, created = Profile.objects.get_or_create(user=request.user)
-    
-#     # Fetch all registrations linked to this user's email
-#     # Using .select_related('race') makes the race name load instantly
-#     registrations = Registration.objects.filter(email=request.user.email).select_related('race').order_by('-created_at')
-    
-#     return render(request, 'accounts/profile.html', {
-#         'profile': profile,
-#         'registrations': registrations
-#     })
-
-
-# @login_required
-# def profile_edit(request):
-#     # Ensure profile exists for this user
-#     profile, created = Profile.objects.get_or_create(user=request.user)
-    
-#     if request.method == 'POST':
-#         # request.FILES is required for the Profile Image to work
-#         form = UserProfileForm(request.POST, request.FILES, instance=profile)
-#         if form.is_valid():
-#             # 1. Save Profile fields (phone, bio, pan, etc.)
-#             profile_instance = form.save()
-            
-#             # 2. Update the User model fields (first_name, last_name)
-#             user = request.user
-#             user.first_name = form.cleaned_data['first_name']
-#             user.last_name = form.cleaned_data['last_name']
-#             user.save()
-            
-#             messages.success(request, "Athlete profile updated!")
-#             return redirect('accounts:profile')
-#     else:
-#         form = UserProfileForm(instance=profile)
-    
-#     return render(request, 'accounts/profile_edit.html', {'form': form})
-
-
-# @login_required # Optional: remove if you want users to view it via a public link
-# def view_registration_details(request, reg_id):
-
-#     """
-#     Shows the details of a specific registration based on the CTCC-0001 ID.
-#     """
-#     registration = get_object_or_404(Registration, registration_id=reg_id)
-    
-#     return render(request, 'accounts/registration_detail.html', {
-#         'registration': registration
-#     })
-
-
 from .forms import UserProfileForm
 # accounts/views.py
 from django.shortcuts import render, redirect, get_object_or_404
@@ -292,32 +32,333 @@ from app_tournaments.models import (
     EntryStatus,
 )
 from .tournament_helpers import get_or_create_user_for_registration
+from app_tournaments.models import Tournament
 
+# def home(request):
+#     """
+#     Homepage: Real Race Data + Hero + Results
+#     """
+#     # --- SVG ICONS (Kept as is) ---
+#     svg_register = '''<svg>...</svg>'''
+#     svg_login = '''<svg>...</svg>'''
+
+#     now = timezone.now()
+#     db_races = Race.objects.all().prefetch_related('race_registrations', 'events').order_by('race_start')
+
+#     # --- DUMMY RESULTS (Keep until you create a Results model) ---
+#     recent_results = [
+#         {"event": "Table Mountain Time Trial", "date": "Feb 28, 2026", "results": [{"name": "Liam Jacobs", "time": "2h 14m 32s"}, {"name": "Thabo Molefe", "time": "2h 16m 08s"}, {"name": "Sarah van Niekerk", "time": "2h 18m 45s"}]},
+#         {"event": "Winelands Classic", "date": "Feb 15, 2026", "results": [{"name": "Nina Botha", "time": "3h 02m 11s"}, {"name": "Chris Dlamini", "time": "3h 04m 50s"}, {"name": "James Le Roux", "time": "3h 07m 22s"}]},
+#         {"event": "Midlands Meander MTB", "date": "Jan 25, 2026", "results": [{"name": "Ethan Pretorius", "time": "4h 31m 09s"}, {"name": "Zanele Nkosi", "time": "4h 35m 44s"}, {"name": "Pieter du Toit", "time": "4h 38m 01s"}]},
+#     ]
+
+#     context = {
+#         "races": db_races,
+#         "recent_results": recent_results,
+#         "now": now,
+#     }
+#     return render(request, "accounts/home.html", context)
 
 def home(request):
     """
-    Homepage: Real Race Data + Hero + Results
+    Homepage:
+    - Cycling races
+    - Badminton tournaments
+    - Pickleball tournaments
+    - Upcoming + past events
     """
-    # --- SVG ICONS (Kept as is) ---
-    svg_register = '''<svg>...</svg>'''
-    svg_login = '''<svg>...</svg>'''
 
     now = timezone.now()
-    db_races = Race.objects.all().prefetch_related('race_registrations', 'events').order_by('race_start')
+    
 
-    # --- DUMMY RESULTS (Keep until you create a Results model) ---
+    # ============================================================
+    # CYCLING RACES
+    # ============================================================
+
+    db_races = (
+        Race.objects
+        .all()
+        .prefetch_related(
+            "race_registrations",
+            "events",
+        )
+        .order_by("race_start")
+    )
+
+    # ============================================================
+    # BADMINTON / PICKLEBALL TOURNAMENTS
+    # ============================================================
+
+    db_tournaments = (
+        Tournament.objects
+        .select_related("sport")
+        .prefetch_related(
+            "categories__category",
+            "categories__entry_format",
+            "categories__entries",
+        )
+        .order_by("tournament_start")
+    )
+
+    upcoming_events = []
+    past_events = []
+
+    # ============================================================
+    # CONVERT CYCLING RACES INTO COMMON EVENT FORMAT
+    # ============================================================
+
+    for race in db_races:
+
+        categories = []
+
+        for race_event in race.events.all():
+
+            suffix = ""
+
+            if race_event.distance_km:
+                suffix = f"{race_event.distance_km}km"
+
+            categories.append({
+                "label": race_event.title,
+                "suffix": suffix,
+            })
+
+        race_data = {
+            "name": race.name,
+            "sport": "cycling",
+            "start": race.race_start,
+            "location": race.location,
+
+            "participant_count": (
+                race.race_registrations.count()
+            ),
+
+            "categories": categories,
+            "status": race.status,
+
+            "register_query": (
+                f"race_id={race.id}"
+            ),
+
+            "winners": [],
+
+            # Cycling result page
+            "results_url": (
+                reverse("app_results:list")
+                + f"?race_id={race.id}"
+            ),
+
+            # Tournaments use this instead
+            "result_links": [],
+        }
+
+        # Upcoming / currently active race
+        if (
+            race.status == "LIVE NOW"
+            or race.status == "REGISTRATION OPEN"
+            or race.race_start >= now
+        ):
+            upcoming_events.append(race_data)
+
+        else:
+            past_events.append(race_data)
+
+    # ============================================================
+    # CONVERT BADMINTON / PICKLEBALL TOURNAMENTS
+    # ============================================================
+
+    for tournament in db_tournaments:
+
+        sport_name = (
+            tournament.sport.name
+            .strip()
+            .lower()
+        )
+
+        # Only sports currently shown on this homepage
+        if sport_name not in [
+            "badminton",
+            "pickleball",
+        ]:
+            continue
+
+        categories = []
+
+        participant_count = 0
+
+        result_links = []
+
+        for tournament_category in tournament.categories.all():
+
+            # Ignore inactive categories
+            if not tournament_category.is_active:
+                continue
+
+            categories.append({
+                "label": tournament_category.category.name,
+
+                "suffix": (
+                    tournament_category.entry_format.name
+                    if tournament_category.entry_format
+                    else ""
+                ),
+            })
+            result_links.append({
+                "label": tournament_category.category.name,
+
+                "url": reverse(
+                    "app_tournaments:results",
+                    kwargs={
+                        "object_id": tournament_category.id
+                    }
+                ),
+            })
+            
+
+            participant_count += (
+                tournament_category.entries.count()
+            )
+
+        tournament_start_date = (
+            timezone.localtime(
+                tournament.tournament_start
+            ).date()
+        )
+
+        tournament_data = {
+            "name": tournament.name,
+
+            "sport": sport_name,
+
+            "start": tournament.tournament_start,
+
+            "location": tournament.venue,
+
+            "participant_count": participant_count,
+
+            "categories": categories,
+
+            "status": tournament.status,
+
+            "register_query": (
+                f"tournament_id={tournament.id}"
+            ),
+
+            "winners": [],
+
+            "results_url": "",
+
+            "result_links": result_links,
+        }
+
+        # Tournament is upcoming or currently live
+        if (
+            tournament.status == "LIVE NOW"
+            or tournament.tournament_start >= now
+        ):
+            upcoming_events.append(
+                tournament_data
+            )
+
+        else:
+            past_events.append(
+                tournament_data
+            )
+
+    # ============================================================
+    # SORT ALL SPORTS TOGETHER
+    # ============================================================
+
+    upcoming_events.sort(
+        key=lambda event: event["start"]
+    )
+
+    past_events.sort(
+        key=lambda event: event["start"],
+        reverse=True,
+    )
+
+    # ============================================================
+    # EXISTING DUMMY RESULTS
+    # ============================================================
+
     recent_results = [
-        {"event": "Table Mountain Time Trial", "date": "Feb 28, 2026", "results": [{"name": "Liam Jacobs", "time": "2h 14m 32s"}, {"name": "Thabo Molefe", "time": "2h 16m 08s"}, {"name": "Sarah van Niekerk", "time": "2h 18m 45s"}]},
-        {"event": "Winelands Classic", "date": "Feb 15, 2026", "results": [{"name": "Nina Botha", "time": "3h 02m 11s"}, {"name": "Chris Dlamini", "time": "3h 04m 50s"}, {"name": "James Le Roux", "time": "3h 07m 22s"}]},
-        {"event": "Midlands Meander MTB", "date": "Jan 25, 2026", "results": [{"name": "Ethan Pretorius", "time": "4h 31m 09s"}, {"name": "Zanele Nkosi", "time": "4h 35m 44s"}, {"name": "Pieter du Toit", "time": "4h 38m 01s"}]},
+        {
+            "event": "Table Mountain Time Trial",
+            "date": "Feb 28, 2026",
+            "results": [
+                {
+                    "name": "Liam Jacobs",
+                    "time": "2h 14m 32s",
+                },
+                {
+                    "name": "Thabo Molefe",
+                    "time": "2h 16m 08s",
+                },
+                {
+                    "name": "Sarah van Niekerk",
+                    "time": "2h 18m 45s",
+                },
+            ],
+        },
+        {
+            "event": "Winelands Classic",
+            "date": "Feb 15, 2026",
+            "results": [
+                {
+                    "name": "Nina Botha",
+                    "time": "3h 02m 11s",
+                },
+                {
+                    "name": "Chris Dlamini",
+                    "time": "3h 04m 50s",
+                },
+                {
+                    "name": "James Le Roux",
+                    "time": "3h 07m 22s",
+                },
+            ],
+        },
+        {
+            "event": "Midlands Meander MTB",
+            "date": "Jan 25, 2026",
+            "results": [
+                {
+                    "name": "Ethan Pretorius",
+                    "time": "4h 31m 09s",
+                },
+                {
+                    "name": "Zanele Nkosi",
+                    "time": "4h 35m 44s",
+                },
+                {
+                    "name": "Pieter du Toit",
+                    "time": "4h 38m 01s",
+                },
+            ],
+        },
     ]
+
+    # ============================================================
+    # TEMPLATE CONTEXT
+    # ============================================================
 
     context = {
         "races": db_races,
+
+        # These are what your new template uses
+        "upcoming_events": upcoming_events,
+        "past_events": past_events,
+
         "recent_results": recent_results,
         "now": now,
     }
-    return render(request, "accounts/home.html", context)
+
+    return render(
+        request,
+        "accounts/home.html",
+        context,
+    )
 
 
 @login_required

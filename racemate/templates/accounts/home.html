@@ -5,189 +5,761 @@
 
 {% block content %}
 
-<section class="hero">
+<!-- ═══════════════════════════════════════════
+     HERO — MULTI-SPORT SLIDESHOW
+════════════════════════════════════════════ -->
+<section class="hero" id="hero">
+
+  <div class="hero-slides">
+
+    <div class="hero-slide is-active"
+         style="background-image: url('https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1600&q=80');"
+         data-sport="cycling">
+    </div>
+
+    <div class="hero-slide"
+         style="background-image: url('https://bybxickqlfiirrjkvuoq.supabase.co/storage/v1/object/public/Work/badminton.jpg');"
+         data-sport="badminton">
+    </div>
+
+    <div class="hero-slide"
+         style="background-image: url('https://bybxickqlfiirrjkvuoq.supabase.co/storage/v1/object/public/Work/pickeball.jpg');"
+         data-sport="pickleball">
+    </div>
+
+  </div>
+
   <div class="hero-overlay"></div>
+
   <div class="hero-inner">
-    <h1 class="hero-title">
+
+    <span class="hero-eyebrow" id="hero-eyebrow">
+      🚴 CYCLING &amp; BMX
+    </span>
+
+    <h1 class="hero-title" id="hero-title">
       FIND YOUR <br>
       <span>NEXT RACE</span>
     </h1>
+
     <p class="hero-subtitle">
-      Discover upcoming cycling events, register in seconds,
-      and track your results — all in one place.
+      Discover upcoming events across cycling, BMX, badminton and pickleball.
+      Register in seconds, and track results — all in one place.
     </p>
+
     <div class="hero-buttons">
-      <a href="{% url 'accounts:register' %}" class="btn hero-outline">Create Registration</a>
-      <a href="#races" class="btn hero-primary">Browse Races</a>
-      <a href="#past-races" class="btn hero-secondary">Past Races</a>
+
+      <a href="{% url 'accounts:register' %}"
+         class="btn hero-outline">
+        Create Registration
+      </a>
+
+      <a href="#events"
+         class="btn hero-primary">
+        Browse Events
+      </a>
+
+      <a href="#past-events"
+         class="btn hero-secondary">
+        Past Events
+      </a>
+
     </div>
+
+    <div class="hero-dots" id="hero-dots">
+
+      <button class="hero-dot is-active"
+              data-slide="0"
+              aria-label="Cycling & BMX slide">
+      </button>
+
+      <button class="hero-dot"
+              data-slide="1"
+              aria-label="Badminton slide">
+      </button>
+
+      <button class="hero-dot"
+              data-slide="2"
+              aria-label="Pickleball slide">
+      </button>
+
+    </div>
+
   </div>
+
 </section>
+
 
 <!-- ═══════════════════════════════════════════
-     UPCOMING / LIVE RACES
+     SPORT FILTER
 ════════════════════════════════════════════ -->
-<section id="races" class="races-section container">
-  <h2 class="section-title">UPCOMING RACES</h2>
-  <p class="section-subtitle">
-    Browse current and upcoming cycling events. Register early to secure your spot.
-  </p>
+<div class="sport-filter container" id="sport-filter">
 
-  <div class="race-grid">
-    {% with upcoming_count=0 %}
-    {% for race in races %}
-      {% if race.status == "LIVE NOW" or race.status == "REGISTRATION OPEN" or race.race_start >= now %}
-      {% with upcoming_count=upcoming_count|add:1 %}
-      <div class="race-card">
-        <div class="race-header">
-          <h3 class="race-title">{{ race.name }}</h3>
-          {% if race.status == "LIVE NOW" %}
-            <span class="badge badge-live">LIVE NOW</span>
-          {% elif race.status == "REGISTRATION OPEN" %}
-            <span class="badge badge-open">OPEN</span>
-          {% else %}
-            <span class="badge badge-soon">COMING SOON</span>
-          {% endif %}
-        </div>
+  <button class="sport-chip is-active"
+          data-filter="all">
+    All Sports
+  </button>
 
-        <ul class="race-meta">
-          <li>
-            <svg class="meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="1" y="3" width="14" height="12" rx="2"/>
-              <path d="M1 7h14M5 1v4M11 1v4"/>
-            </svg>
-            {{ race.race_start|date:"M d, Y" }}
-          </li>
-          <li>
-            <svg class="meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5z"/>
-              <circle cx="8" cy="6" r="1.5"/>
-            </svg>
-            {{ race.location }}
-          </li>
-          <li>
-            <svg class="meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="8" cy="5" r="2.5"/>
-              <path d="M2 14c0-3.31 2.69-6 6-6s6 2.69 6 6"/>
-            </svg>
-            {{ race.race_registrations.count }} rider{% if race.race_registrations.count != 1 %}s{% endif %}
-          </li>
-        </ul>
+  <button class="sport-chip"
+          data-filter="cycling">
+    🚴 Cycling
+  </button>
 
-        <div class="race-categories">
-          <p class="categories-label">Categories</p>
-          <div class="category-tags">
-            {% for event in race.events.all %}
-              <span class="category-tag">
-                {{ event.title }}{% if event.distance_km %} · {{ event.distance_km }}km{% endif %}
-              </span>
-            {% empty %}
-              <span class="category-tag category-tag--general">General Participation</span>
-            {% endfor %}
-          </div>
-        </div>
+  <button class="sport-chip"
+          data-filter="bmx">
+    🚲 BMX
+  </button>
 
-        <div class="race-card-footer">
-          {% if race.status == "LIVE NOW" or race.status == "REGISTRATION OPEN" %}
-            <a href="{% url 'accounts:register' %}?race_id={{ race.id }}" class="btn-register">Register Now</a>
-          {% else %}
-            <button class="btn-notify" disabled>Notify Me</button>
-          {% endif %}
-        </div>
-      </div>
-      {% endwith %}
-      {% endif %}
-    {% endfor %}
-    {% endwith %}
+  <button class="sport-chip"
+          data-filter="badminton">
+    🏸 Badminton
+  </button>
 
-    {# Fallback — shown only if no upcoming races exist at all #}
-    {% if not races %}
-      <div class="no-races">
-        <p>No upcoming races scheduled. Check back soon!</p>
-      </div>
-    {% endif %}
-  </div>
-</section>
+  <button class="sport-chip"
+          data-filter="pickleball">
+    🏓 Pickleball
+  </button>
+
+</div>
+
 
 <!-- ═══════════════════════════════════════════
-     PAST RACES
+     UPCOMING EVENTS
 ════════════════════════════════════════════ -->
-<section id="past-races" class="races-section races-section--past container">
-  <h2 class="section-title">PAST RACES</h2>
+<section id="events" class="races-section container">
+
+  <h2 class="section-title">
+    UPCOMING EVENTS
+  </h2>
+
   <p class="section-subtitle">
-    View results and standings from completed events.
+    Browse current and upcoming events across every sport.
+    Register early to secure your spot.
   </p>
 
-  <div class="race-grid">
-    {% with past_count=0 %}
-    {% for race in races %}
-      {% if race.status != "LIVE NOW" and race.status != "REGISTRATION OPEN" and race.race_start < now %}
-      {% with past_count=past_count|add:1 %}
-      <div class="race-card race-card--past">
+
+  <div class="race-grid" id="upcoming-grid">
+
+    {% for event in upcoming_events %}
+
+      <div class="race-card"
+           data-sport="{{ event.sport }}">
+
         <div class="race-header">
-          <h3 class="race-title">{{ race.name }}</h3>
-          <span class="badge badge-ended">ENDED</span>
+
+          <h3 class="race-title">
+            {{ event.name }}
+          </h3>
+
+          {% if event.status == "LIVE NOW" or event.status == "LIVE_NOW" %}
+
+            <span class="badge badge-live">
+              LIVE NOW
+            </span>
+
+          {% elif event.status == "REGISTRATION OPEN" or event.status == "REGISTRATION_OPEN" %}
+
+            <span class="badge badge-open">
+              OPEN
+            </span>
+
+          {% else %}
+
+            <span class="badge badge-soon">
+              COMING SOON
+            </span>
+
+          {% endif %}
+
         </div>
+
+
+        <span class="sport-tag sport-tag--{{ event.sport }}">
+
+          {% if event.sport == "cycling" %}
+
+            🚴 Cycling
+
+          {% elif event.sport == "bmx" %}
+
+            🚲 BMX
+
+          {% elif event.sport == "badminton" %}
+
+            🏸 Badminton
+
+          {% elif event.sport == "pickleball" %}
+
+            🏓 Pickleball
+
+          {% else %}
+
+            {{ event.sport }}
+
+          {% endif %}
+
+        </span>
+
 
         <ul class="race-meta">
+
           <li>
-            <svg class="meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="1" y="3" width="14" height="12" rx="2"/>
+
+            <svg class="meta-icon"
+                 viewBox="0 0 16 16"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.5">
+
+              <rect x="1"
+                    y="3"
+                    width="14"
+                    height="12"
+                    rx="2"/>
+
               <path d="M1 7h14M5 1v4M11 1v4"/>
+
             </svg>
-            {{ race.race_start|date:"M d, Y" }}
+
+            {{ event.start|date:"M d, Y" }}
+
           </li>
+
+
           <li>
-            <svg class="meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+
+            <svg class="meta-icon"
+                 viewBox="0 0 16 16"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.5">
+
               <path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5z"/>
-              <circle cx="8" cy="6" r="1.5"/>
+
+              <circle cx="8"
+                      cy="6"
+                      r="1.5"/>
+
             </svg>
-            {{ race.location }}
+
+            {{ event.location }}
+
           </li>
+
+
           <li>
-            <svg class="meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="8" cy="5" r="2.5"/>
+
+            <svg class="meta-icon"
+                 viewBox="0 0 16 16"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.5">
+
+              <circle cx="8"
+                      cy="5"
+                      r="2.5"/>
+
               <path d="M2 14c0-3.31 2.69-6 6-6s6 2.69 6 6"/>
+
             </svg>
-            {{ race.race_registrations.count }} rider{% if race.race_registrations.count != 1 %}s{% endif %}
+
+            {{ event.participant_count }}
+            participant{% if event.participant_count != 1 %}s{% endif %}
+
           </li>
+
         </ul>
 
+
         <div class="race-categories">
-          <p class="categories-label">Categories</p>
+
+          <p class="categories-label">
+            Categories
+          </p>
+
           <div class="category-tags">
-            {% for event in race.events.all %}
+
+            {% for cat in event.categories %}
+
               <span class="category-tag">
-                {{ event.title }}{% if event.distance_km %} · {{ event.distance_km }}km{% endif %}
+
+                {{ cat.label }}
+
+                {% if cat.suffix %}
+                  · {{ cat.suffix }}
+                {% endif %}
+
               </span>
+
             {% empty %}
-              <span class="category-tag category-tag--general">General Participation</span>
+
+              <span class="category-tag category-tag--general">
+                General Participation
+              </span>
+
             {% endfor %}
+
           </div>
+
         </div>
+
 
         <div class="race-card-footer">
-          <a href="#" class="btn-results">View Results</a>
-        </div>
-      </div>
-      {% endwith %}
-      {% endif %}
-    {% endfor %}
-    {% endwith %}
 
-    {# Fallback — shown only if there are truly no races at all in the queryset #}
-    {% if not races %}
-      <div class="no-races">
-        <p>No past races to display.</p>
+          {% if event.status == "LIVE NOW" or event.status == "LIVE_NOW" or event.status == "REGISTRATION OPEN" or event.status == "REGISTRATION_OPEN" %}
+
+            <a href="{% url 'accounts:register' %}?{{ event.register_query }}"
+               class="btn-register btn-register--{{ event.sport }}">
+
+              Register Now
+
+            </a>
+
+          {% else %}
+
+            <button class="btn-notify" disabled>
+              Notify Me
+            </button>
+
+          {% endif %}
+
+        </div>
+
       </div>
-    {% endif %}
+
+    {% endfor %}
+
+
+    <div class="no-races filter-empty"
+         id="upcoming-empty"
+         style="display: none;">
+
+      <p>
+        No upcoming events in this sport right now.
+        Try another filter.
+      </p>
+
+    </div>
+
   </div>
+
 </section>
+
+
+<!-- ═══════════════════════════════════════════
+     PAST EVENTS / RESULTS
+════════════════════════════════════════════ -->
+<section id="past-events"
+         class="races-section races-section--past container">
+
+  <h2 class="section-title">
+    PAST EVENTS
+  </h2>
+
+  <p class="section-subtitle">
+    View results and standings from completed cycling,
+    BMX, badminton and pickleball events.
+  </p>
+
+
+  <div class="race-grid" id="past-grid">
+
+    {% for event in past_events %}
+
+      <div class="race-card race-card--past"
+           data-sport="{{ event.sport }}">
+
+        <div class="race-header">
+
+          <h3 class="race-title">
+            {{ event.name }}
+          </h3>
+
+          <span class="badge badge-ended">
+            ENDED
+          </span>
+
+        </div>
+
+
+        <span class="sport-tag sport-tag--{{ event.sport }}">
+
+          {% if event.sport == "cycling" %}
+
+            🚴 Cycling
+
+          {% elif event.sport == "bmx" %}
+
+            🚲 BMX
+
+          {% elif event.sport == "badminton" %}
+
+            🏸 Badminton
+
+          {% elif event.sport == "pickleball" %}
+
+            🏓 Pickleball
+
+          {% else %}
+
+            {{ event.sport }}
+
+          {% endif %}
+
+        </span>
+
+
+        <ul class="race-meta">
+
+          <li>
+
+            <svg class="meta-icon"
+                 viewBox="0 0 16 16"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.5">
+
+              <rect x="1"
+                    y="3"
+                    width="14"
+                    height="12"
+                    rx="2"/>
+
+              <path d="M1 7h14M5 1v4M11 1v4"/>
+
+            </svg>
+
+            {{ event.start|date:"M d, Y" }}
+
+          </li>
+
+
+          <li>
+
+            <svg class="meta-icon"
+                 viewBox="0 0 16 16"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.5">
+
+              <path d="M8 1.5C5.51 1.5 3.5 3.51 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.49-2.01-4.5-4.5-4.5z"/>
+
+              <circle cx="8"
+                      cy="6"
+                      r="1.5"/>
+
+            </svg>
+
+            {{ event.location }}
+
+          </li>
+
+
+          <li>
+
+            <svg class="meta-icon"
+                 viewBox="0 0 16 16"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.5">
+
+              <circle cx="8"
+                      cy="5"
+                      r="2.5"/>
+
+              <path d="M2 14c0-3.31 2.69-6 6-6s6 2.69 6 6"/>
+
+            </svg>
+
+            {{ event.participant_count }}
+            participant{% if event.participant_count != 1 %}s{% endif %}
+
+          </li>
+
+        </ul>
+
+
+        {% if event.winners %}
+
+          <div class="winner-line">
+
+            🏆
+
+            {% for w in event.winners %}
+
+              <strong>{{ w }}</strong>
+
+              {% if not forloop.last %}
+                <span class="winner-sep">·</span>
+              {% endif %}
+
+            {% endfor %}
+
+          </div>
+
+        {% endif %}
+
+
+        <div class="race-categories">
+
+          <p class="categories-label">
+            Categories
+          </p>
+
+          <div class="category-tags">
+
+            {% for cat in event.categories %}
+
+              <span class="category-tag">
+
+                {{ cat.label }}
+
+                {% if cat.suffix %}
+                  · {{ cat.suffix }}
+                {% endif %}
+
+              </span>
+
+            {% empty %}
+
+              <span class="category-tag category-tag--general">
+                General Participation
+              </span>
+
+            {% endfor %}
+
+          </div>
+
+        </div>
+
+
+<div class="race-card-footer">
+
+  {% if event.result_links %}
+
+    {% for result in event.result_links %}
+
+      <a href="{{ result.url }}"
+         class="btn-results btn-results--{{ event.sport }}"
+         {% if not forloop.last %}
+         style="margin-bottom: 0.5rem;"
+         {% endif %}>
+
+        View {{ result.label }} Results
+
+      </a>
+
+    {% endfor %}
+
+  {% elif event.results_url %}
+
+    <a href="{{ event.results_url }}"
+       class="btn-results btn-results--{{ event.sport }}">
+
+      View Results
+
+    </a>
+
+  {% endif %}
+
+</div>
+
+      </div>
+
+    {% endfor %}
+
+
+    <div class="no-races filter-empty"
+         id="past-empty"
+         style="display: none;">
+
+      <p>
+        No past events in this sport yet.
+      </p>
+
+    </div>
+
+  </div>
+
+</section>
+
 
 <style>
+
+/* ═══════════════════════════════════════════
+   TOKENS
+════════════════════════════════════════════ */
+
+:root {
+  --color-navy: #0f1f3d;
+  --color-cycling: #1d4ed8;
+  --color-bmx: #0891b2;
+  --color-badminton: #15803d;
+  --color-pickleball: #d97706;
+}
+
+
+/* ═══════════════════════════════════════════
+   HERO SLIDESHOW
+════════════════════════════════════════════ */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-slides {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.1s ease;
+}
+
+.hero-slide.is-active {
+  opacity: 1;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(15,31,61,0.78) 0%,
+    rgba(15,31,61,0.65) 55%,
+    rgba(15,31,61,0.85) 100%
+  );
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+  transition: opacity 0.3s ease;
+}
+
+.hero-dots {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.hero-dot {
+  width: 28px;
+  height: 4px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255,255,255,0.35);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.25s ease;
+}
+
+.hero-dot.is-active {
+  background: #ffffff;
+}
+
+
+/* ═══════════════════════════════════════════
+   SPORT FILTER
+════════════════════════════════════════════ */
+
+.sport-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  padding: 2rem 0 0;
+}
+
+.sport-chip {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  border: 1.5px solid #e5e9f0;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sport-chip:hover {
+  border-color: var(--color-navy);
+}
+
+.sport-chip.is-active {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: #ffffff;
+}
+
+
+/* ═══════════════════════════════════════════
+   SPORT TAGS
+════════════════════════════════════════════ */
+
+.sport-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  margin-top: -0.4rem;
+}
+
+.sport-tag--cycling {
+  background: #dbeafe;
+  color: var(--color-cycling);
+}
+
+.sport-tag--bmx {
+  background: #cffafe;
+  color: var(--color-bmx);
+}
+
+.sport-tag--badminton {
+  background: #dcfce7;
+  color: var(--color-badminton);
+}
+
+.sport-tag--pickleball {
+  background: #fef3c7;
+  color: var(--color-pickleball);
+}
+
+
 /* ═══════════════════════════════════════════
    RACE GRID & CARDS
 ════════════════════════════════════════════ */
+
 .races-section {
   padding: 3rem 0 4rem;
 }
@@ -220,7 +792,6 @@
   gap: 1.5rem;
 }
 
-/* ── Card shell ── */
 .race-card {
   background: #ffffff;
   border: 1px solid #e5e9f0;
@@ -228,7 +799,7 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.85rem;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
@@ -246,7 +817,6 @@
   opacity: 1;
 }
 
-/* ── Header row ── */
 .race-header {
   display: flex;
   align-items: flex-start;
@@ -263,7 +833,11 @@
   flex: 1;
 }
 
-/* ── Badges ── */
+
+/* ═══════════════════════════════════════════
+   BADGES
+════════════════════════════════════════════ */
+
 .badge {
   flex-shrink: 0;
   display: inline-flex;
@@ -297,8 +871,15 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.3); }
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.3);
+  }
 }
 
 .badge-open {
@@ -319,7 +900,11 @@
   border: 1px solid #fde68a;
 }
 
-/* ── Meta list ── */
+
+/* ═══════════════════════════════════════════
+   META
+════════════════════════════════════════════ */
+
 .race-meta {
   list-style: none;
   margin: 0;
@@ -344,7 +929,34 @@
   color: #9ca3af;
 }
 
-/* ── Categories ── */
+
+/* ═══════════════════════════════════════════
+   WINNER
+════════════════════════════════════════════ */
+
+.winner-line {
+  font-size: 0.875rem;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.winner-sep {
+  color: #d97706;
+  margin: 0 0.15rem;
+}
+
+
+/* ═══════════════════════════════════════════
+   CATEGORIES
+════════════════════════════════════════════ */
+
 .categories-label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -376,7 +988,11 @@
   border-color: #e5e7eb;
 }
 
-/* ── Footer ── */
+
+/* ═══════════════════════════════════════════
+   CARD FOOTER
+════════════════════════════════════════════ */
+
 .race-card-footer {
   margin-top: auto;
   padding-top: 0.5rem;
@@ -399,6 +1015,18 @@
 
 .btn-register:hover {
   background: #1a3560;
+}
+
+.btn-register--badminton:hover {
+  background: var(--color-badminton);
+}
+
+.btn-register--pickleball:hover {
+  background: var(--color-pickleball);
+}
+
+.btn-register--bmx:hover {
+  background: var(--color-bmx);
 }
 
 .btn-notify {
@@ -433,12 +1061,350 @@
   background: #eff6ff;
 }
 
+.btn-results--badminton {
+  color: var(--color-badminton);
+  border-color: #bbf7d0;
+}
+
+.btn-results--badminton:hover {
+  background: #f0fdf4;
+}
+
+.btn-results--pickleball {
+  color: var(--color-pickleball);
+  border-color: #fde68a;
+}
+
+.btn-results--pickleball:hover {
+  background: #fffbeb;
+}
+
+.btn-results--bmx {
+  color: var(--color-bmx);
+  border-color: #a5f3fc;
+}
+
+.btn-results--bmx:hover {
+  background: #ecfeff;
+}
+
+
+/* ═══════════════════════════════════════════
+   EMPTY STATE
+════════════════════════════════════════════ */
+
 .no-races {
   grid-column: 1 / -1;
   text-align: center;
   color: #9ca3af;
   padding: 3rem 0;
 }
+
 </style>
+
+
+<script>
+
+(function () {
+
+  // ═══════════════════════════════════════
+  // HERO SLIDESHOW
+  // ═══════════════════════════════════════
+
+  var slides =
+    document.querySelectorAll('.hero-slide');
+
+  var dots =
+    document.querySelectorAll('.hero-dot');
+
+  var eyebrow =
+    document.getElementById('hero-eyebrow');
+
+  var title =
+    document.getElementById('hero-title');
+
+  var current = 0;
+
+
+  var content = {
+
+    cycling: {
+      eyebrow: '🚴 CYCLING &amp; BMX',
+      line1: 'FIND YOUR',
+      line2: 'NEXT RACE'
+    },
+
+    badminton: {
+      eyebrow: '🏸 BADMINTON',
+      line1: 'FIND YOUR',
+      line2: 'NEXT MATCH'
+    },
+
+    pickleball: {
+      eyebrow: '🏓 PICKLEBALL',
+      line1: 'FIND YOUR',
+      line2: 'NEXT GAME'
+    }
+
+  };
+
+
+  function goTo(index) {
+
+    if (!slides.length) {
+      return;
+    }
+
+    slides[current].classList.remove('is-active');
+
+    if (dots[current]) {
+      dots[current].classList.remove('is-active');
+    }
+
+    current = index;
+
+    slides[current].classList.add('is-active');
+
+    if (dots[current]) {
+      dots[current].classList.add('is-active');
+    }
+
+
+    var sport =
+      slides[current].getAttribute('data-sport');
+
+    var c =
+      content[sport];
+
+
+    if (c) {
+
+      eyebrow.style.opacity = 0;
+      title.style.opacity = 0;
+
+      setTimeout(function () {
+
+        eyebrow.innerHTML = c.eyebrow;
+
+        title.innerHTML =
+          c.line1 +
+          '<br><span>' +
+          c.line2 +
+          '</span>';
+
+        eyebrow.style.opacity = 1;
+        title.style.opacity = 1;
+
+      }, 250);
+
+    }
+
+  }
+
+
+  var timer = null;
+
+  if (slides.length > 1) {
+
+    timer = setInterval(function () {
+
+      goTo(
+        (current + 1) % slides.length
+      );
+
+    }, 5000);
+
+  }
+
+
+  dots.forEach(function (dot, i) {
+
+    dot.addEventListener('click', function () {
+
+      if (timer) {
+        clearInterval(timer);
+      }
+
+      goTo(i);
+
+      if (slides.length > 1) {
+
+        timer = setInterval(function () {
+
+          goTo(
+            (current + 1) % slides.length
+          );
+
+        }, 5000);
+
+      }
+
+    });
+
+  });
+
+
+
+  // ═══════════════════════════════════════
+  // SPORT FILTER + EMPTY STATES
+  // ═══════════════════════════════════════
+
+  var chips =
+    document.querySelectorAll('.sport-chip');
+
+  var upcomingEmpty =
+    document.getElementById('upcoming-empty');
+
+  var pastEmpty =
+    document.getElementById('past-empty');
+
+  var upcomingGrid =
+    document.getElementById('upcoming-grid');
+
+  var pastGrid =
+    document.getElementById('past-grid');
+
+
+  function visibleCardsInGrid(grid) {
+
+    if (!grid) {
+      return 0;
+    }
+
+    var cards =
+      grid.querySelectorAll('.race-card');
+
+    var visible = 0;
+
+
+    cards.forEach(function (card) {
+
+      if (card.style.display !== 'none') {
+        visible++;
+      }
+
+    });
+
+
+    return visible;
+
+  }
+
+
+  function updateEmptyStates(filter) {
+
+    var upcomingVisible =
+      visibleCardsInGrid(upcomingGrid);
+
+    var pastVisible =
+      visibleCardsInGrid(pastGrid);
+
+
+    if (upcomingEmpty) {
+
+      if (upcomingVisible === 0) {
+
+        if (filter === 'all') {
+
+          upcomingEmpty.querySelector('p').textContent =
+            'No upcoming events scheduled. Check back soon!';
+
+        } else {
+
+          upcomingEmpty.querySelector('p').textContent =
+            'No upcoming events in this sport right now. Try another filter.';
+
+        }
+
+        upcomingEmpty.style.display = 'block';
+
+      } else {
+
+        upcomingEmpty.style.display = 'none';
+
+      }
+
+    }
+
+
+    if (pastEmpty) {
+
+      if (pastVisible === 0) {
+
+        if (filter === 'all') {
+
+          pastEmpty.querySelector('p').textContent =
+            'No past events to display yet.';
+
+        } else {
+
+          pastEmpty.querySelector('p').textContent =
+            'No past events in this sport yet.';
+
+        }
+
+        pastEmpty.style.display = 'block';
+
+      } else {
+
+        pastEmpty.style.display = 'none';
+
+      }
+
+    }
+
+  }
+
+
+  chips.forEach(function (chip) {
+
+    chip.addEventListener('click', function () {
+
+      chips.forEach(function (c) {
+        c.classList.remove('is-active');
+      });
+
+
+      chip.classList.add('is-active');
+
+
+      var filter =
+        chip.getAttribute('data-filter');
+
+
+      var cards =
+        document.querySelectorAll('.race-card');
+
+
+      cards.forEach(function (card) {
+
+        var sport =
+          card.getAttribute('data-sport');
+
+
+        var match =
+          filter === 'all' ||
+          sport === filter;
+
+
+        card.style.display =
+          match ? '' : 'none';
+
+      });
+
+
+      updateEmptyStates(filter);
+
+    });
+
+  });
+
+
+  // Check states when page first loads
+  updateEmptyStates('all');
+
+})();
+
+</script>
 
 {% endblock %}

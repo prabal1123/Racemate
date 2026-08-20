@@ -193,7 +193,7 @@ def fixture_dashboard_view(request, object_id):
 # =========================================================
 # RESULTS
 # =========================================================
-@staff_required
+
 def results_view(request, object_id):
     tournament_category = get_object_or_404(TournamentCategory, pk=object_id)
 

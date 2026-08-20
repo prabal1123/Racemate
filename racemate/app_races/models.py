@@ -23,16 +23,7 @@ class Race(models.Model):
         return "COMING SOON"
 
 
-# class Event(models.Model):
-#     race = models.ForeignKey(Race, related_name='events', on_delete=models.CASCADE)
-#     title = models.CharField(max_length=255) 
-#     distance_km = models.PositiveIntegerField(null=True, blank=True) # Must be here
-#     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Must be here
-#     description = models.TextField(blank=True)
 
-#     def __str__(self):
-#         return f"{self.race.name} - {self.title}"
-    
 
 class Event(models.Model):
     race = models.ForeignKey(
@@ -89,16 +80,3 @@ class RaceRegistration(models.Model):
     def __str__(self):
         return f"{self.participant.name} in {self.event.title}"
 
-# class DoublesEntry(models.Model):
-#     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-#     player_one = models.ForeignKey(
-#         "accounts.Registration",
-#         on_delete=models.CASCADE,
-#         related_name="doubles_entries_as_player_one"
-#     )
-#     player_two = models.ForeignKey(
-#         "accounts.Registration",
-#         on_delete=models.CASCADE,
-#         related_name="doubles_entries_as_player_two"
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
