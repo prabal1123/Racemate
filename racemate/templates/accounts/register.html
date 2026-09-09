@@ -1,261 +1,953 @@
 {% load static %}
+{% load widget_tweaks %}
 {% include 'base.html' %}
 
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Registration Form</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
 
-  <style>
-    .form-row { margin-bottom: 0.75rem; }
-    label { display:block; margin-bottom:0.25rem; }
-  </style>
-</head>
-<body> -->
-  <div class="container">
-    <div class="row"> 
-      <div class="col-md-8 offset-md-2">
-        <h2 class="mt-4 mb-3">Event Registration</h2>
-          <h1>Registration Form</h1>
+  :root {
+    --primary: #0052cc;
+    --primary-light: #e8f0fe;
+    --accent: #ff4d00;
+    --dark: #0a0f1e;
+    --mid: #3a4460;
+    --light: #f4f6fb;
+    --border: #dde3f0;
+    --success: #00b894;
+    --radius: 14px;
+    --card-shadow: 0 8px 32px rgba(10,15,30,0.10);
+  }
 
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+  body {
+    background: var(--light);
+    font-family: 'Barlow', sans-serif;
+  }
 
-  <form method="POST" id="regForm" novalidate>
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+  .reg-hero {
+    background: linear-gradient(120deg, #0a0f1e 60%, #0052cc 100%);
+    padding: 48px 0 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
 
-    <div class="form-row">
-      <label for="{{ form.name.id_for_label }}">Name:</label>
-      {{ form.name }} {{ form.name.errors }}
-    </div>
+  .reg-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 38px,
+      rgba(255,255,255,0.03) 38px,
+      rgba(255,255,255,0.03) 40px
+    );
+  }
 
-    <div class="form-row">
-      <label for="{{ form.fathers_name.id_for_label }}">Father's Name:</label>
-      {{ form.fathers_name }} {{ form.fathers_name.errors }}
-    </div>
+  .reg-hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 0;
+    position: relative;
+  }
 
-    <div class="form-row">
-      <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth:</label>
-      {{ form.date_of_birth }} {{ form.date_of_birth.errors }}
-      <small>Choose from calendar (or type YYYY-MM-DD). Future dates are blocked.</small>
-    </div>
+  .reg-hero h1 span {
+    color: var(--accent);
+  }
 
-  <h1>Registration Form</h1>
+  .reg-hero p {
+    color: rgba(255,255,255,0.6);
+    font-size: 1rem;
+    margin-top: 8px;
+    position: relative;
+  }
 
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+  /* --- Form Card --- */
+  .reg-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
 
-  <form method="POST" id="regForm" novalidate>
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+  .reg-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 28px;
+    background: var(--light);
+    border-bottom: 1px solid var(--border);
+  }
 
-    <div class="form-row">
-      <label for="{{ form.name.id_for_label }}">Name:</label>
-      {{ form.name }} {{ form.name.errors }}
-    </div>
+  .reg-section-header .step-num {
+    width: 30px;
+    height: 30px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
 
-    <div class="form-row">
-      <label for="{{ form.fathers_name.id_for_label }}">Father's Name:</label>
-      {{ form.fathers_name }} {{ form.fathers_name.errors }}
-    </div>
+  .reg-section-header h5 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dark);
+    margin: 0;
+  }
 
-    <div class="form-row">
-      <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth:</label>
-      {{ form.date_of_birth }} {{ form.date_of_birth.errors }}
-      <small>Choose from calendar (or type YYYY-MM-DD). Future dates are blocked.</small>
-    </div>
+  .reg-section-body {
+    padding: 28px;
+  }
 
-    <p>
-      Age on event: <strong id="age_display">—</strong>
-      &nbsp;|&nbsp;
-      Predicted category: <strong id="category_display">—</strong>
-    </p>
+  /* --- Form Controls --- */
+  .form-label {
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--mid);
+    margin-bottom: 6px;
+  }
 
-    <div class="form-row">
-      <label for="{{ form.profession.id_for_label }}">Profession:</label>
-      {{ form.profession }} {{ form.profession.errors }}
-    </div>
+  .form-control, .form-select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    color: var(--dark);
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
 
-    <p>
-      <label for="id_gender">Gender:</label>
-      {{ form.gender }}
-    </p>
+  .form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0,82,204,0.10);
+    outline: none;
+  }
 
-    <div class="form-row">
-      <label for="{{ form.address.id_for_label }}">Address:</label>
-      {{ form.address }} {{ form.address.errors }}
-    </div>
+  .text-danger.small {
+    font-size: 0.78rem;
+    margin-top: 4px;
+  }
 
-    <div class="form-row">
-      <label for="id_state">State:</label>
-      <select name="state" id="id_state" data-selected-state="{{ form.state.value|default:'' }}">
-        <option value="">---------</option>
-        {% for s in states %}
-          <option value="{{ s.id }}">{{ s.name }}</option>
+  /* --- Race Select --- */
+  .race-select-wrap {
+    position: relative;
+  }
+
+  .race-select-wrap .form-select {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: 2px solid var(--primary);
+    padding: 12px 16px;
+    color: var(--primary);
+  }
+
+  /* --- Event Checkbox Cards --- */
+  .event-card-checkbox {
+    position: relative;
+  }
+
+  .event-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .event-label-card {
+    display: block;
+    padding: 16px;
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    height: 100%;
+  }
+
+  .event-label-card:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  .event-input:checked + .event-label-card {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 4px 12px rgba(0,82,204,0.12);
+  }
+
+  .event-input:checked + .event-label-card .event-title {
+    color: var(--primary);
+  }
+
+  .event-check-icon {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.18s;
+    background: #fff;
+  }
+
+  .event-input:checked + .event-label-card .event-check-icon {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .event-input:checked + .event-label-card .event-check-icon::after {
+    content: '';
+    width: 5px;
+    height: 9px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translateY(-1px);
+    display: block;
+  }
+
+  .event-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--dark);
+    transition: color 0.18s;
+  }
+
+  .event-distance {
+    font-size: 0.78rem;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .event-price {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--primary);
+    background: var(--primary-light);
+    border-radius: 20px;
+    padding: 2px 12px;
+    white-space: nowrap;
+  }
+
+  /* Events container hidden by default */
+  #events_container {
+    display: none;
+  }
+
+  /* --- Email Preference Toggle --- */
+  .email-pref-toggle {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: #fff;
+    user-select: none;
+  }
+
+  .email-pref-toggle:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  /* Hidden real checkbox */
+  #receive_confirmation_email {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  /* Custom toggle switch */
+  .toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .toggle-track {
+    width: 44px;
+    height: 24px;
+    background: #cdd3e0;
+    border-radius: 12px;
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    transition: transform 0.2s;
+  }
+
+  /* When checkbox is checked — toggle is ON */
+  #receive_confirmation_email:checked ~ label .toggle-track {
+    background: var(--primary);
+  }
+
+  #receive_confirmation_email:checked ~ label .toggle-thumb {
+    transform: translateX(20px);
+  }
+
+  #receive_confirmation_email:checked ~ label .email-pref-toggle {
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  #receive_confirmation_email:checked ~ label .pref-status {
+    color: var(--primary);
+  }
+
+  #receive_confirmation_email:checked ~ label .pref-status-text::before {
+    content: "Yes, send me a confirmation email";
+  }
+
+  #receive_confirmation_email:not(:checked) ~ label .pref-status-text::before {
+    content: "No, I don't want a confirmation email";
+  }
+
+  #receive_confirmation_email:not(:checked) ~ label .pref-status {
+    color: #999;
+  }
+
+  .pref-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+
+  .pref-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--dark);
+  }
+
+  .pref-status {
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-top: 2px;
+    transition: color 0.2s;
+  }
+
+  /* --- Submit Button --- */
+  .btn-register {
+    background: linear-gradient(90deg, #0052cc, #0070f3);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 16px;
+    width: 100%;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(0,82,204,0.25);
+  }
+
+  .btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,82,204,0.30);
+  }
+
+  .btn-register:active {
+    transform: translateY(0);
+  }
+
+  /* --- Alert --- */
+  .alert-info {
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  /* --- Back link --- */
+  .back-link {
+    color: var(--mid);
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+  }
+
+  .back-link:hover {
+    color: var(--primary);
+  }
+
+  /* --- Flatpickr override --- */
+  .flatpickr-input {
+    background: #fff !important;
+  }
+
+  /* --- Registration type toggle (Race / Tournament) --- */
+  .btn-check:checked + .btn-outline-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+
+  /* --- Partner search --- */
+  .partner-search-results {
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .partner-search-results:empty {
+    display: none;
+  }
+</style>
+
+<!-- Hero -->
+<div class="reg-hero">
+  <h1>Athlete <span>Registration</span></h1>
+  <p>Fill in your details and choose your race or tournament below</p>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
         {% endfor %}
-      </select>
-    </div>
+      {% endif %}
 
-    <div class="form-row">
-      <label for="id_district_fk">District:</label>
-      <select name="district_fk" id="id_district_fk" data-selected-district="{{ form.district_fk.value|default:'' }}">
-        <option value="">---------</option>
-      </select>
-    </div>
+      <form method="POST" id="regForm" novalidate enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
 
-    <div class="form-row">
-      <label for="{{ form.representing_from.id_for_label }}">Representing From:</label>
-      {{ form.representing_from }} {{ form.representing_from.errors }}
-    </div>
+        <!-- Section 1: Personal Details -->
+        <div class="reg-card mb-4">
+          <div class="reg-section-header">
+            <div class="step-num">1</div>
+            <h5>Personal Details</h5>
+          </div>
+          <div class="reg-section-body">
 
-    <div class="form-row">
-      <label for="{{ form.mobile_number.id_for_label }}">Mobile Number:</label>
-      {{ form.mobile_number }} {{ form.mobile_number.errors }}
-    </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Full Name</label>
+                {{ form.name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.name.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Father's Name</label>
+                {{ form.fathers_name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.fathers_name.errors }}</div>
+              </div>
+            </div>
 
-    <div class="form-row">
-      <label for="{{ form.aadhar_number.id_for_label }}">Aadhar Number:</label>
-      {{ form.aadhar_number }} {{ form.aadhar_number.errors }}
-    </div>
+            <div class="row g-3 mt-1">
+              <div class="col-md-4">
+                <label class="form-label">Date of Birth</label>
+                {{ form.date_of_birth|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.date_of_birth.errors }}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Gender</label>
+                {{ form.gender|add_class:"form-select" }}
+                <div class="text-danger small">{{ form.gender.errors }}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Blood Group</label>
+                <input type="text" name="blood_group" class="form-control" placeholder="e.g. O+">
+              </div>
+            </div>
 
-    <div class="form-row">
-      <label for="{{ form.events.id_for_label }}">Events:</label>
-      {{ form.events }} {{ form.events.errors }}
-    </div>
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="form-label">Email Address</label>
+                {{ form.email|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.email.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Mobile Number</label>
+                {{ form.mobile_number|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.mobile_number.errors }}</div>
+              </div>
+            </div>
 
-    <button type="submit">Submit</button>
-  </form>
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="form-label">School / College / Club</label>
+                {{ form.school_name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.school_name.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Aadhaar Number</label>
+                {{ form.aadhar_number|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.aadhar_number.errors }}</div>
+              </div>
+            </div>
 
-  <a href="{% url 'accounts:home' %}">Back to Home</a>
+          </div>
+        </div>
 
+        <!-- Section 2: Location -->
+        <div class="reg-card mb-4">
+          <div class="reg-section-header">
+            <div class="step-num">2</div>
+            <h5>Location & Representation</h5>
+          </div>
+          <div class="reg-section-body">
+
+            <div class="mb-3">
+              <label class="form-label">Address</label>
+              {{ form.address|add_class:"form-control"|attr:"rows:2" }}
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">State</label>
+                <select name="state" id="id_state" class="form-select" data-selected-state="{{ form.state.value|default:'' }}">
+                  <option value="">Select State</option>
+                  {% for s in states %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">District</label>
+                <select name="district_fk" id="id_district_fk" class="form-select" data-selected-district="{{ form.district_fk.value|default:'' }}">
+                  <option value="">Select District</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label">Representing From</label>
+              {{ form.representing_from|add_class:"form-control" }}
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section 3: Participation Selection (Race OR Tournament) -->
+        <div class="reg-card mb-4">
+          <div class="reg-section-header">
+            <div class="step-num">3</div>
+            <h5>Participation Selection</h5>
+          </div>
+          <div class="reg-section-body">
+
+            <div class="mb-4">
+              <label class="form-label d-block mb-2">I want to register for</label>
+              <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="registration_type" id="regtype_race" value="race" checked>
+                <label class="btn btn-outline-primary" for="regtype_race">Race</label>
+
+                <input type="radio" class="btn-check" name="registration_type" id="regtype_tournament" value="tournament">
+                <label class="btn btn-outline-primary" for="regtype_tournament">Tournament</label>
+              </div>
+            </div>
+
+            <!-- ===================== RACE PANEL ===================== -->
+            <div id="race_panel">
+              <div class="mb-4 race-select-wrap">
+                <label class="form-label">Select Race</label>
+                <select name="race" id="id_race_selection" class="form-select">
+                  <option value="" disabled selected>— Choose a Race —</option>
+                  {% for race in active_races %}
+                    <option value="{{ race.id }}"
+                      {% if preselected_race_id == race.id|stringformat:"i" %}selected{% endif %}>
+                      {{ race.name }} ({{ race.location }})
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div id="events_container">
+                <label class="form-label mb-3">Select Event Categories</label>
+                <p class="text-muted small mb-3">Tick one or more events you want to participate in.</p>
+
+                {% for race in active_races %}
+                  <div class="race-events-group" id="events_for_race_{{ race.id }}" style="display:none;">
+                    <div class="row g-3">
+                      {% for event in race.events.all %}
+                        <div class="col-md-6">
+                          <div class="event-card-checkbox">
+                            <input type="checkbox" name="selected_events" value="{{ event.id }}"
+                                   id="event_{{ event.id }}" class="event-input">
+                            <label for="event_{{ event.id }}" class="event-label-card">
+                              <div class="d-flex align-items-start gap-2">
+                                <div class="event-check-icon mt-1"></div>
+                                <div class="flex-grow-1">
+                                  <div class="d-flex justify-content-between align-items-center">
+                                    <span class="event-title">{{ event.title }}</span>
+                                    <span class="event-price">₹{{ event.price }}</span>
+                                  </div>
+                                  {% if event.distance_km %}
+                                    <div class="event-distance">{{ event.distance_km }} KM</div>
+                                  {% endif %}
+                                </div>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      {% empty %}
+                        <div class="col-12">
+                          <p class="text-muted small">No events available for this race yet.</p>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <!-- =================== END RACE PANEL ==================== -->
+
+            <!-- =================== TOURNAMENT PANEL ==================== -->
+            <div id="tournament_panel" style="display:none;">
+              <label class="form-label mb-2">Select Tournament(s)</label>
+              <p class="text-muted small mb-3">Check one or more tournaments, then tick the categories you want to enter under each.</p>
+
+              {% for t in active_tournaments %}
+                <div class="mb-4">
+                  <div class="event-card-checkbox mb-3">
+                    <input type="checkbox" name="selected_tournaments" value="{{ t.id }}"
+                           id="tournament_{{ t.id }}" class="event-input tournament-toggle" data-target="tournament_categories_{{ t.id }}">
+                    <label for="tournament_{{ t.id }}" class="event-label-card">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="event-check-icon"></div>
+                        <div>
+                          <span class="event-title">{{ t.name }}</span>
+                          <div class="event-distance">{{ t.venue }}</div>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="tournament-categories-group" id="tournament_categories_{{ t.id }}" style="display:none; padding-left: 16px; border-left: 3px solid var(--border);">
+                    <div class="row g-3">
+                      {% for c in t.categories.all %}
+                        {% if c.is_active and c.registration_open %}
+                          <div class="col-md-6">
+                            <div class="event-card-checkbox">
+                              <input type="checkbox" name="selected_tournament_categories" value="{{ c.id }}"
+                                     id="category_{{ c.id }}" class="event-input category-toggle"
+                                     data-partner-target="partner_slots_cat_{{ c.id }}">
+                              <label for="category_{{ c.id }}" class="event-label-card">
+                                <div class="d-flex align-items-start gap-2">
+                                  <div class="event-check-icon mt-1"></div>
+                                  <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                      <span class="event-title">{{ c.category.name }}</span>
+                                      <span class="event-price">₹{{ c.entry_fee }}</span>
+                                    </div>
+                                    <div class="event-distance">{{ c.entry_format.name }}</div>
+                                  </div>
+                                </div>
+                              </label>
+                            </div>
+
+                            {% if c.partner_positions %}
+                              <div class="partner-slots-block mt-2 p-3 border rounded" id="partner_slots_cat_{{ c.id }}" style="display:none;">
+                                <label class="form-label mb-1">Partner details for {{ c.category.name }}</label>
+                                <p class="text-muted small mb-2">Search by name/email, or type details manually.</p>
+                                {% for pos in c.partner_positions %}
+                                  <div class="mb-3">
+                                    <label class="form-label small">Partner {{ pos|add:"-1" }}</label>
+                                    <input type="text" class="form-control partner-search-input" placeholder="Start typing…" autocomplete="off"
+                                           data-hidden-target="partner_email_hidden_{{ c.id }}_{{ pos }}">
+                                    <div class="partner-search-results list-group mt-1" data-results-for="partner_email_hidden_{{ c.id }}_{{ pos }}"></div>
+                                    <input type="hidden" id="partner_email_hidden_{{ c.id }}_{{ pos }}" name="partner_email_{{ c.id }}_{{ pos }}">
+                                    <div class="row g-2 mt-2">
+                                      <div class="col-md-6">
+                                        <input type="text" class="form-control" name="partner_name_manual_{{ c.id }}_{{ pos }}" placeholder="Full name">
+                                      </div>
+                                      <div class="col-md-6">
+                                        <input type="email" class="form-control" name="partner_email_manual_{{ c.id }}_{{ pos }}" placeholder="Email">
+                                      </div>
+                                    </div>
+                                  </div>
+                                {% endfor %}
+                              </div>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% empty %}
+                        <div class="col-12"><p class="text-muted small">No categories open for registration in this tournament yet.</p></div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <p class="text-muted small">No tournaments currently open for registration.</p>
+              {% endfor %}
+            </div>
+            <!-- ================= END TOURNAMENT PANEL =================== -->
+
+          </div>
+        </div>
+
+        <!-- Section 4: Communication Preferences -->
+        <div class="reg-card mb-4">
+          <div class="reg-section-header">
+            <div class="step-num">4</div>
+            <h5>Communication Preferences</h5>
+          </div>
+          <div class="reg-section-body">
+
+            <input
+              type="checkbox"
+              name="receive_confirmation_email"
+              id="receive_confirmation_email"
+              checked>
+
+            <label for="receive_confirmation_email">
+              <div class="email-pref-toggle">
+
+                <div class="toggle-switch" aria-hidden="true">
+                  <div class="toggle-track">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </div>
+
+                <div class="pref-icon">✉️</div>
+
+                <div class="flex-grow-1">
+                  <div class="pref-title">Confirmation Email</div>
+                  <div class="pref-status">
+                    <span class="pref-status-text"></span>
+                  </div>
+                </div>
+
+              </div>
+            </label>
+
+            <p class="text-muted small mt-3 mb-0" style="padding-left:2px;">
+              When enabled, a confirmation email with your registration details will be sent to your registered email address after successful registration.
+            </p>
+
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-register">
+          Confirm &amp; Register →
+        </button>
+
+      </form>
+
+      <div class="text-center mt-4">
+        <a href="{% url 'accounts:home' %}" class="back-link">
+          <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
       </div>
+
     </div>
   </div>
+</div>
 
-  <!-- Flatpickr JS -->
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<!-- Hidden data element to pass Django context to JS cleanly -->
+<div id="user-meta"
+     data-email="{{ request.user.email|default:'' }}"
+     style="display:none;">
+</div>
 
-  <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // ---------- District loading ----------
-    const stateSelect = document.getElementById('id_state');
-    const districtSelect = document.getElementById('id_district_fk');
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-    function loadDistricts(stateId, preselectDistrictId) {
-      districtSelect.innerHTML = '<option value="">Loading...</option>';
-      if (!stateId) {
-        districtSelect.innerHTML = '<option value="">---------</option>';
-        return;
-      }
-      const url = "{% url 'accounts:ajax_load_districts' %}?state=" + stateId;
+<script>
+document.addEventListener('DOMContentLoaded', function () {
 
-      fetch(url)
-        .then(resp => resp.json())
-        .then(data => {
-          districtSelect.innerHTML = '<option value="">---------</option>';
-          data.districts.forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d.id;
-            opt.textContent = d.name;
-            if (preselectDistrictId && String(preselectDistrictId) === String(d.id)) {
-              opt.selected = true;
-            }
-            districtSelect.appendChild(opt);
-          });
-        })
-        .catch(err => {
-          console.error('Error loading districts', err);
-          districtSelect.innerHTML = '<option value="">---------</option>';
+  // ── 1. Auto-fill email from logged-in user ──────────────────────────
+  const emailField = document.querySelector('input[name="email"]');
+  const userEmail  = document.getElementById('user-meta')?.dataset.email;
+  if (emailField && userEmail && !emailField.value) {
+    emailField.value = userEmail;
+  }
+
+  // ── 2. AJAX District Loading ────────────────────────────────────────
+  const stateSelect    = document.getElementById('id_state');
+  const districtSelect = document.getElementById('id_district_fk');
+
+  function loadDistricts(stateId, preselectDistrictId) {
+    districtSelect.innerHTML = '<option value="">Loading…</option>';
+    fetch("{% url 'accounts:ajax_load_districts' %}?state=" + stateId)
+      .then(r => r.json())
+      .then(data => {
+        districtSelect.innerHTML = '<option value="">Select District</option>';
+        data.districts.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = d.name;
+          if (preselectDistrictId == d.id) opt.selected = true;
+          districtSelect.appendChild(opt);
         });
-    }
-
-    stateSelect.addEventListener('change', function() {
-      loadDistricts(this.value, null);
-    });
-
-    const preselectedState = stateSelect.getAttribute('data-selected-state');
-    const preselectedDistrict = districtSelect.getAttribute('data-selected-district');
-    if (preselectedState) {
-      stateSelect.value = preselectedState;
-      loadDistricts(preselectedState, preselectedDistrict);
-    }
-
-    // ---------- Flatpickr init ----------
-    const dobInput = document.getElementById('id_date_of_birth');
-    if (dobInput && typeof flatpickr !== 'undefined') {
-      flatpickr(dobInput, {
-        dateFormat: "Y-m-d",
-        altInput: true,
-        altFormat: "F j, Y",
-        allowInput: true,
-        maxDate: "today",
-        minDate: "1950-01-01",
-        monthSelectorType: 'dropdown',
       });
-    }
+  }
 
-    // ---------- Age & Gender-based Category ----------
-    const genderInput = document.getElementById('id_gender');
-    const ageDisplay = document.getElementById('age_display');
-    const categoryDisplay = document.getElementById('category_display');
-    const eventDate = new Date(); // set to your actual event date if needed
-
-    function computeAge(dobString, onDate) {
-      if (!dobString) return null;
-      const d = new Date(dobString);
-      if (isNaN(d)) return null;
-      let years = onDate.getFullYear() - d.getFullYear();
-      if ((onDate.getMonth() < d.getMonth()) || 
-          (onDate.getMonth() === d.getMonth() && onDate.getDate() < d.getDate())) {
-        years--;
-      }
-      return years;
-    }
-
-    function getGenderPrefix() {
-      const g = (genderInput.value || '').toLowerCase();
-      if (g === 'female') return 'Women';
-      if (g === 'male') return 'Men';
-      return 'Participant';
-    }
-
-    function getCategory(age, genderPrefix) {
-      if (age === null) return 'Unspecified';
-      if (age >= 56) return `${genderPrefix} Masters 56+`;
-      if (age >= 46 && age <= 55) return `${genderPrefix} Masters 46–55`;
-      if (age >= 36 && age <= 45) return `${genderPrefix} Masters 36–45`;
-      if (age >= 19 && age <= 22) return `${genderPrefix} under-23 (19–22)`;
-      if (age >= 19) return `${genderPrefix} Elite (19 & above)`;
-      if (age >= 17 && age <= 18) return `${genderPrefix} Junior (17–18)`;
-      if (age >= 15 && age <= 16) return `${genderPrefix} Sub-Junior (15–16)`;
-      if (age >= 12 && age <= 14) return `${genderPrefix} Youth (12–14)`;
-      return 'Other / Not categorized';
-    }
-
-    function updateAgeAndCategory() {
-      const dobVal = dobInput ? dobInput.value : null;
-      const genderPrefix = getGenderPrefix();
-      const age = computeAge(dobVal, eventDate);
-      ageDisplay.textContent = (age === null || isNaN(age)) ? '—' : age;
-      categoryDisplay.textContent = getCategory(age, genderPrefix);
-    }
-
-    if (dobInput) dobInput.addEventListener('change', updateAgeAndCategory);
-    if (genderInput) genderInput.addEventListener('change', updateAgeAndCategory);
-    if (dobInput.value) updateAgeAndCategory();
+  stateSelect.addEventListener('change', function () {
+    loadDistricts(this.value, null);
   });
-  </script>
-<!-- </body>
-</html> -->
+
+  const preselectedState    = stateSelect.dataset.selectedState;
+  const preselectedDistrict = districtSelect.dataset.selectedDistrict;
+  if (preselectedState) {
+    stateSelect.value = preselectedState;
+    loadDistricts(preselectedState, preselectedDistrict);
+  }
+
+  // ── 3. Race → Event Dynamic Filtering ──────────────────────────────
+  const raceSelect      = document.getElementById('id_race_selection');
+  const eventsContainer = document.getElementById('events_container');
+  const eventGroups     = document.querySelectorAll('.race-events-group');
+
+  function updateEvents() {
+    const selectedRaceId = raceSelect.value;
+    eventGroups.forEach(g => g.style.display = 'none');
+    if (selectedRaceId) {
+      eventsContainer.style.display = 'block';
+      const target = document.getElementById('events_for_race_' + selectedRaceId);
+      if (target) target.style.display = 'block';
+    } else {
+      eventsContainer.style.display = 'none';
+    }
+  }
+
+  raceSelect.addEventListener('change', updateEvents);
+  if (raceSelect.value) updateEvents();
+
+  // ── 3b. Race/Tournament Toggle ───────────────────────────────────────
+  const regtypeRadios   = document.querySelectorAll('input[name="registration_type"]');
+  const racePanel       = document.getElementById('race_panel');
+  const tournamentPanel = document.getElementById('tournament_panel');
+
+  function applyRegType() {
+    const checked = document.querySelector('input[name="registration_type"]:checked').value;
+    racePanel.style.display       = checked === 'race' ? 'block' : 'none';
+    tournamentPanel.style.display = checked === 'tournament' ? 'block' : 'none';
+  }
+  regtypeRadios.forEach(r => r.addEventListener('change', applyRegType));
+  applyRegType();
+
+  // ── 3c. Tournament checkbox → show/hide its categories group ────────
+  // Mirrors the race → events pattern: everything is already rendered
+  // server-side, JS just toggles visibility. Multiple tournaments can
+  // be checked at once.
+  document.querySelectorAll('.tournament-toggle').forEach(cb => {
+    cb.addEventListener('change', function () {
+      const target = document.getElementById(this.dataset.target);
+      if (target) target.style.display = this.checked ? 'block' : 'none';
+      // Unchecking a tournament un-checks its categories + hides their partner slots
+      if (!this.checked && target) {
+        target.querySelectorAll('.category-toggle').forEach(catCb => {
+          catCb.checked = false;
+          const partnerBlock = document.getElementById(catCb.dataset.partnerTarget);
+          if (partnerBlock) partnerBlock.style.display = 'none';
+        });
+      }
+    });
+  });
+
+  // ── 3d. Category checkbox → show/hide its partner-slots block ───────
+  document.querySelectorAll('.category-toggle').forEach(cb => {
+    cb.addEventListener('change', function () {
+      const partnerBlock = document.getElementById(this.dataset.partnerTarget);
+      if (partnerBlock) partnerBlock.style.display = this.checked ? 'block' : 'none';
+    });
+  });
+
+  // ── 3e. Partner search — works for any number of partner slots across
+  // any number of checked categories, keyed by each slot's own hidden field id
+  document.querySelectorAll('.partner-search-input').forEach(input => {
+    let debounceTimer;
+    input.addEventListener('input', function () {
+      clearTimeout(debounceTimer);
+      const query = this.value.trim();
+      const hiddenTargetId = this.dataset.hiddenTarget;
+      const resultsBox = document.querySelector(`.partner-search-results[data-results-for="${hiddenTargetId}"]`);
+
+      if (query.length < 2) { resultsBox.innerHTML = ''; return; }
+
+      debounceTimer = setTimeout(() => {
+        fetch("{% url 'accounts:ajax_partner_search' %}?q=" + encodeURIComponent(query))
+          .then(r => r.json())
+          .then(data => {
+            resultsBox.innerHTML = '';
+            data.results.forEach(p => {
+              const item = document.createElement('button');
+              item.type = 'button';
+              item.className = 'list-group-item list-group-item-action';
+              item.textContent = `${p.name} (${p.email})`;
+              item.addEventListener('click', () => {
+                input.value = `${p.name} (${p.email})`;
+                document.getElementById(hiddenTargetId).value = p.email;
+                resultsBox.innerHTML = '';
+              });
+              resultsBox.appendChild(item);
+            });
+          });
+      }, 300);
+    });
+  });
+
+  // ── 4. Date Picker ──────────────────────────────────────────────────
+  flatpickr("#id_date_of_birth", {
+    dateFormat: "Y-m-d",
+    maxDate: "today",
+    altInput: true,
+    altFormat: "F j, Y"
+  });
+
+  // ── 5. Email preference toggle — keep thumb in sync ─────────────────
+  const emailPrefCheckbox = document.getElementById('receive_confirmation_email');
+  const toggleThumb       = document.querySelector('.toggle-thumb');
+  const toggleTrack       = document.querySelector('.toggle-track');
+
+  function syncToggle() {
+    if (emailPrefCheckbox.checked) {
+      toggleThumb.style.transform  = 'translateX(20px)';
+      toggleTrack.style.background = 'var(--primary)';
+    } else {
+      toggleThumb.style.transform  = 'translateX(0)';
+      toggleTrack.style.background = '#cdd3e0';
+    }
+  }
+
+  emailPrefCheckbox.addEventListener('change', syncToggle);
+  syncToggle();
+
+});
+</script>

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    :root {
+        --sport-blue: #0066ff;
+        --athlete-black: #111;
+        --soft-bg: #f8f9fa;
+        --input-border: #e2e8f0;
+    }
+
+    .edit-page-wrapper { background: var(--soft-bg); padding: 60px 20px; min-height: 100vh; }
+    
+    .edit-card { 
+        max-width: 800px; margin: 0 auto; background: #fff; 
+        border-radius: 24px; padding: 48px; 
+        box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .edit-header { margin-bottom: 40px; }
+    .edit-header h2 { font-size: 28px; font-weight: 800; color: var(--athlete-black); margin: 0; }
+    .edit-header p { color: #666; margin-top: 8px; }
+
+    .form-section-title { 
+        font-size: 12px; font-weight: 700; color: #cbd5e0; 
+        text-transform: uppercase; margin: 40px 0 20px; 
+        border-bottom: 1px solid #edf2f7; padding-bottom: 8px;
+        letter-spacing: 1px;
+    }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .full-width { grid-column: span 2; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { 
+        display: block; font-size: 14px; font-weight: 600; 
+        margin-bottom: 8px; color: #4a5568; 
+    }
+
+    /* Style the actual Django rendered inputs */
+    .form-group input, 
+    .form-group textarea, 
+    .form-group select {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        font-size: 15px;
+        color: var(--athlete-black);
+        background-color: #fff;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus, 
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--sport-blue);
+        box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1);
+    }
+
+    .form-group textarea { min-height: 120px; resize: vertical; }
+
+    /* Custom style for the file upload */
+    .form-group input[type="file"] {
+        padding: 10px;
+        font-size: 13px;
+        background: #fdfdfd;
+        border: 1px dashed var(--input-border);
+    }
+
+    .btn-save { 
+        background: var(--athlete-black); color: #fff; border: none; 
+        padding: 18px 30px; border-radius: 50px; font-size: 16px;
+        font-weight: 700; cursor: pointer; margin-top: 40px; 
+        width: 100%; transition: all 0.3s ease; 
+    }
+
+    .btn-save:hover { 
+        background: var(--sport-blue); 
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 102, 255, 0.2);
+    }
+
+    .btn-cancel {
+        display: block; text-align: center; margin-top: 20px;
+        color: #a0aec0; text-decoration: none; font-size: 14px;
+        font-weight: 500;
+    }
+    .btn-cancel:hover { color: #4a5568; }
+
+    /* Error handling style */
+    .errorlist { color: #e53e3e; font-size: 13px; list-style: none; padding: 0; margin-top: 5px; }
+</style>
+
+<div class="edit-page-wrapper">
+    <div class="edit-card">
+        <div class="edit-header">
+            <h2>Athlete Settings</h2>
+            <p>Keep your profile updated for upcoming race registrations.</p>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-section-title">Personal Identity</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>First Name</label>
+                    {{ form.first_name }}
+                    {{ form.first_name.errors }}
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    {{ form.last_name }}
+                    {{ form.last_name.errors }}
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    {{ form.phone_number }}
+                    {{ form.phone_number.errors }}
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    {{ form.dob }}
+                </div>
+                <div class="form-group full-width">
+                    <label>Athlete Bio</label>
+                    {{ form.bio }}
+                </div>
+            </div>
+
+            <div class="form-section-title">Verification & Health</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Blood Group</label>
+                    {{ form.blood_group }}
+                </div>
+                <div class="form-group">
+                    <label>PAN Number</label>
+                    {{ form.pan_number }}
+                </div>
+                <div class="form-group full-width">
+                    <label>Aadhaar (UID)</label>
+                    {{ form.aadhaar_number }}
+                </div>
+                <div class="form-group full-width">
+                    <label>Profile Photo</label>
+                    {{ form.profile_image }}
+                </div>
+            </div>
+
+            <div class="form-section-title">Location Details</div>
+            <div class="form-group">
+                <label>Street Address / House No.</label>
+                {{ form.address_line_1 }}
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>City</label>
+                    {{ form.city }}
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    {{ form.state }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn-save">Update Athlete Profile</button>
+            <a href="{% url 'accounts:profile' %}" class="btn-cancel">Cancel and go back</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

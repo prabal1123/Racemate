@@ -9,8 +9,10 @@
 from django.contrib import admin
 from .models import (
     DimState, DimDistrict, DimGender, DimEventType,
-    DimEventCategory, dimDate
-)
+    DimEventCategory, dimDate)
+
+# @admin.register(Sport)
+
 
 @admin.register(DimState)
 class DimStateAdmin(admin.ModelAdmin):

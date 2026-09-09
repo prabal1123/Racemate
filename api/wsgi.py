@@ -5,24 +5,51 @@ import traceback
 from pathlib import Path
 import importlib
 
-# Ensure repo root on sys.path (one level above api/)
-ROOT = Path(__file__).resolve().parent.parent
-root_str = str(ROOT)
-if root_str not in sys.path:
-    sys.path.insert(0, root_str)
+# -------------------------
+# Robust repo-root detection (walk ancestors for manage.py)
+# -------------------------
+HERE = Path(__file__).resolve()
 
-# Also add outer racemate folder to sys.path if present (handles nested layouts)
-outer_racemate = ROOT / "racemate"
-if outer_racemate.exists() and str(outer_racemate) not in sys.path:
-    sys.path.insert(0, str(outer_racemate))
+repo_root = None
+# include HERE.parent then all parents
+candidates = [HERE.parent] + list(HERE.parents)
 
-# --- DEBUG (optional, useful in Vercel logs) ---
-print("DEBUG: api/wsgi.py running. sys.path[0] =", sys.path[0])
-print("DEBUG: sys.path[:4] =", sys.path[:4])
-print("DEBUG: files at project root:", sorted(p.name for p in ROOT.iterdir()))
-# --- end debug ---
+for cand in candidates:
+    try:
+        if (cand / "manage.py").exists():
+            repo_root = cand
+            break
+    except Exception:
+        continue
 
-# Build candidate settings names
+# fallback: prefer two levels up if nothing found
+if repo_root is None:
+    repo_root = HERE.parents[2] if len(HERE.parents) >= 3 else HERE.parent
+
+ROOT = repo_root
+ROOT_STR = str(ROOT)
+
+# Ensure repo root is first on sys.path
+if ROOT_STR not in sys.path:
+    sys.path.insert(0, ROOT_STR)
+
+# Also ensure the inner racemate package directory is available
+inner_racemate = ROOT / "racemate"
+if inner_racemate.exists() and str(inner_racemate) not in sys.path:
+    sys.path.insert(0, str(inner_racemate))
+
+# Debug info (useful in Vercel logs)
+try:
+    print("DEBUG: repo_root =", ROOT_STR)
+    print("DEBUG: sys.path[0] =", sys.path[0])
+    print("DEBUG: sys.path[:4] =", sys.path[:4])
+    print("DEBUG: repo root files:", sorted(p.name for p in ROOT.iterdir()))
+except Exception:
+    pass
+
+# -------------------------
+# Discover settings modules
+# -------------------------
 candidates = [
     "racemate.settings",
     "racemate.racemate.settings",
@@ -31,15 +58,17 @@ candidates = [
 
 discovered = []
 for p in ROOT.rglob("settings.py"):
-    rel = p.relative_to(ROOT).with_suffix("")
-    full = ".".join(rel.parts)
-    discovered.append(full)
-    candidates.append(full)
+    try:
+        rel = p.relative_to(ROOT).with_suffix("")
+        full = ".".join(rel.parts)
+        discovered.append(full)
+        candidates.append(full)
+    except Exception:
+        continue
 
 print("DEBUG: discovered settings modules:", discovered)
 print("DEBUG: candidates initial:", candidates)
 
-# Try to import a candidate settings module
 found = None
 for mod in candidates:
     try:
@@ -50,7 +79,6 @@ for mod in candidates:
     except Exception as exc:
         print(f"DEBUG: candidate {mod} rejected: {exc!r}")
 
-# Try trimmed discovered candidates if necessary
 if not found:
     for full in discovered:
         parts = full.split(".")
@@ -69,11 +97,12 @@ if not found:
         "Unable to locate an importable settings module. Tried: " + ", ".join(candidates + discovered)
     )
 
-# Set the discovered settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", found)
 print("DEBUG: Using DJANGO_SETTINGS_MODULE =", found)
 
+# -------------------------
 # Create the standard WSGI application object
+# -------------------------
 try:
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
@@ -83,5 +112,4 @@ except Exception:
     raise
 
 # Export the WSGI callable as `app` for Vercel to use.
-# Also keep `application` (standard) for Django tools.
 app = application

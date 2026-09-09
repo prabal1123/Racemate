@@ -1,74 +1,154 @@
 {% extends "base.html" %}
-{% load humanize %}
 
-{% block title %}Time entry{% endblock %}
+{% block title %}Live Time Entry — Racemate{% endblock %}
 
 {% block content %}
-<div class="container mx-auto p-4">
-  <h1 class="text-2xl font-semibold mb-4">Time entry</h1>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-primary">Live Timing Sheet</h2>
+    <span class="badge bg-success">
+      <i class="bi bi-broadcast"></i> Live Mode Active
+    </span>
+  </div>
 
-  {% if messages %}
-    <div>
-      {% for message in messages %}
-        <div class="mb-2">{{ message }}</div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <div class="card p-4 mb-6">
-    <form method="post" novalidate>
-      {% csrf_token %}
-      <div class="mb-2">
-        {{ form.bib_id.label_tag }}<br>
-        {{ form.bib_id }}
-        {% if form.bib_id.errors %} <div class="text-red-600">{{ form.bib_id.errors }}</div> {% endif %}
+  <div class="card p-4 mb-4 shadow-sm border-0 bg-light">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label fw-bold"><i class="bi bi-flag-fill"></i> 1. Select Race</label>
+        <select name="race_id" class="form-select border-primary shadow-sm" onchange="this.form.submit()">
+          <option value="">-- View All Candidates --</option>
+          {% for race in races %}
+            <option value="{{ race.id }}" {% if selected_race_id == race.id|slugify %}selected{% endif %}>
+              {{ race.name }}
+            </option>
+          {% endfor %}
+        </select>
       </div>
 
-      <div class="mb-2">
-        {{ form.fields.lap_time_text.label_tag }} <!-- not directly used, so show manual input below -->
+      <div class="col-md-4">
+        <label class="form-label fw-bold"><i class="bi bi-layers-half"></i> 2. Filter by Heat Number</label>
+        <select name="heat_number" class="form-select border-primary shadow-sm" onchange="this.form.submit()">
+          <option value="">-- All Heats --</option>
+          {# Dynamic range or unique heat numbers from your registrations #}
+          {% for i in "123456789"|make_list %}
+            <option value="{{ forloop.counter }}" {% if request.GET.heat_number == forloop.counter|slugify %}selected{% endif %}>
+                Heat {{ forloop.counter }}
+            </option>
+          {% endfor %}
+        </select>
       </div>
 
-      <div class="mb-2">
-        <label for="id_lap_time_text">Lap time (MM:SS or HH:MM:SS or seconds)</label><br>
-        <input type="text" name="lap_time_text" id="id_lap_time_text" class="w-full" placeholder="1:23 or 01:02:03 or 83" value="{{ request.POST.lap_time_text }}">
-        {% if form.non_field_errors %} <div class="text-red-600">{{ form.non_field_errors }}</div> {% endif %}
-        {% if form.errors.lap_time_text %} <div class="text-red-600">{{ form.errors.lap_time_text }}</div> {% endif %}
+      <div class="col-md-4 text-md-end">
+        <a href="{% url 'app_bib:time_entry' %}" class="btn btn-outline-secondary btn-sm">Clear Filters</a>
       </div>
-
-      <div class="mb-2">
-        {{ form.note.label_tag }}<br>
-        {{ form.note }}
-        {% if form.note.errors %} <div class="text-red-600">{{ form.note.errors }}</div> {% endif %}
-      </div>
-
-      <button type="submit" class="btn btn-primary">Save</button>
     </form>
   </div>
 
-  <h2 class="text-xl font-medium mb-2">Recent entries</h2>
-  <table class="min-w-full table-auto border-collapse">
-    <thead>
-      <tr>
-        <th class="border px-2 py-1">#</th>
-        <th class="border px-2 py-1">Bib</th>
-        <th class="border px-2 py-1">Lap time</th>
-        <th class="border px-2 py-1">Note</th>
-        <th class="border px-2 py-1">Created</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for e in entries %}
-      <tr>
-        <td class="border px-2 py-1">{{ forloop.counter }}</td>
-        <td class="border px-2 py-1">{{ e.bib_id }}</td>
-        <td class="border px-2 py-1">{{ e.lap_time }}</td>
-        <td class="border px-2 py-1">{{ e.note }}</td>
-        <td class="border px-2 py-1">{{ e.created_at|naturaltime }}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="p-2">No entries yet.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="card shadow-sm border-0 overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th class="ps-4">Bib</th>
+            <th>Athlete Name</th>
+            <th>Heat / Group</th> 
+            <th>Category</th>
+            <th class="pe-4" style="width: 300px;">Finish Time (MM:SS)</th>
+          </tr>
+        </thead>
+        <tbody id="timing-table-body">
+          {% for r in registrations %}
+          <tr id="row-{{ r.id }}">
+            <td class="ps-4">
+              <span class="badge bg-dark font-monospace" style="font-size: 0.9rem;">
+                {{ r.bib_public }}
+              </span>
+            </td>
+            <td>
+              <div class="fw-bold text-dark">{{ r.name }}</div>
+              <small class="text-muted">{{ r.registration_id }}</small>
+            </td>
+            <td>
+              {# UPDATED: Displaying simple heat_number #}
+              {% if r.heat_number %}
+                <span class="badge bg-info text-dark shadow-sm">
+                  <i class="bi bi-fire"></i> Heat {{ r.heat_number }}
+                </span>
+              {% else %}
+                <span class="text-muted small italic">General</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="text-secondary small">{{ r.gender|title }}</span>
+              <br>
+              <span class="badge bg-secondary opacity-75">{{ r.age_display }} yrs</span>
+            </td>
+            <td class="pe-4">
+              <div class="input-group">
+                <input type="text" 
+                       id="time-{{ r.id }}" 
+                       class="form-control border-primary timing-input" 
+                       placeholder="MM:SS" 
+                       value="{{ r.current_time|default:'' }}"
+                       data-reg-id="{{ r.id }}">
+                <button class="btn btn-primary px-3" onclick="manualSave('{{ r.id }}')">
+                  <i class="bi bi-save"></i>
+                </button>
+              </div>
+              <div id="status-{{ r.id }}" class="small mt-1" style="height: 15px;"></div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-5">
+               <p class="text-muted">No "Present" candidates found for this selection.</p>
+               <a href="{% url 'app_bib:start_list' %}" class="btn btn-sm btn-outline-primary">Check Attendance</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
+
+<script>
+// We use the ID directly as the regId for the API call
+const BASE_RESULTS_URL = "/results/update/"; 
+
+function manualSave(regId) {
+    const inputField = document.getElementById(`time-${regId}`);
+    const statusDiv = document.getElementById(`status-${regId}`);
+    const timeValue = inputField.value;
+
+    statusDiv.innerHTML = '<span class="text-muted small">Saving...</span>';
+
+    fetch(`${BASE_RESULTS_URL}${regId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ "end_time_mmss": timeValue })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok || data.status === 'success') {
+            inputField.classList.add('is-valid');
+            statusDiv.innerHTML = '<span class="text-success small">Saved!</span>';
+            setTimeout(() => {
+                inputField.classList.remove('is-valid');
+                statusDiv.innerHTML = '';
+            }, 2000);
+        } else {
+            statusDiv.innerHTML = '<span class="text-danger small">Error</span>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        statusDiv.innerHTML = '<span class="text-danger small">Network Error</span>';
+    });
+}
+</script>
 {% endblock %}

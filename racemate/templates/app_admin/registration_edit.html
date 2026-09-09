@@ -1,10 +1,311 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Edit Registration #{{ reg.id }} — Racemate{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+
+  :root {
+    --primary: #0052cc;
+    --primary-light: #e8f0fe;
+    --accent: #ff4d00;
+    --dark: #0a0f1e;
+    --mid: #3a4460;
+    --light: #f4f6fb;
+    --border: #dde3f0;
+    --radius: 14px;
+    --card-shadow: 0 8px 32px rgba(10,15,30,0.10);
+  }
+
+  body {
+    background: var(--light);
+    font-family: 'Barlow', sans-serif;
+  }
+
+  /* Hero */
+  .edit-hero {
+    background: linear-gradient(120deg, #0a0f1e 60%, #0052cc 100%);
+    padding: 40px 0 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .edit-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg, transparent, transparent 38px,
+      rgba(255,255,255,0.03) 38px, rgba(255,255,255,0.03) 40px
+    );
+  }
+  .edit-hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 0;
+    position: relative;
+  }
+  .edit-hero h1 span { color: var(--accent); }
+  .edit-hero p {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.95rem;
+    margin-top: 6px;
+    position: relative;
+  }
+
+  /* Card */
+  .reg-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  .reg-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    background: var(--light);
+    border-bottom: 1px solid var(--border);
+  }
+  .reg-section-header .step-num {
+    width: 28px;
+    height: 28px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+  .reg-section-header h5 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dark);
+    margin: 0;
+  }
+  .reg-section-body { padding: 24px; }
+
+  /* Form controls */
+  .form-label {
+    font-weight: 600;
+    font-size: 0.80rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--mid);
+    margin-bottom: 5px;
+  }
+  .form-control, .form-select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    color: var(--dark);
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0,82,204,0.10);
+    outline: none;
+  }
+  .text-danger.small { font-size: 0.78rem; margin-top: 4px; }
+
+  /* Buttons */
+  .btn-save {
+    background: linear-gradient(90deg, #0052cc, #0070f3);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 13px 36px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(0,82,204,0.22);
+  }
+  .btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,82,204,0.28);
+  }
+  .btn-cancel {
+    background: #fff;
+    color: var(--mid);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 13px 36px;
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-cancel:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .back-link {
+    color: var(--mid);
+    text-decoration: none;
+    font-size: 0.88rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--primary); }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>Edit registration #{{ reg.id }}</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save</button>
-  <a href="{% url 'registration_list' %}">Cancel</a> 
-</form>
+
+<!-- Hero -->
+<div class="edit-hero">
+  <h1>Edit <span>Registration</span></h1>
+  <p>Registration #{{ reg.registration_id|default:reg.id }}</p>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content: center">
+    <div class="col-lg-8 mx-auto">
+
+      <form method="POST" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <!-- Personal Details -->
+        <div class="reg-card">
+          <div class="reg-section-header">
+            <div class="step-num">1</div>
+            <h5>Personal Details</h5>
+          </div>
+          <div class="reg-section-body">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Full Name</label>
+                {{ form.name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.name.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Father's Name</label>
+                {{ form.fathers_name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.fathers_name.errors }}</div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-4">
+                <label class="form-label">Date of Birth</label>
+                {{ form.date_of_birth|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.date_of_birth.errors }}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Gender</label>
+                {{ form.gender|add_class:"form-select" }}
+                <div class="text-danger small">{{ form.gender.errors }}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Email Address</label>
+                {{ form.email|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.email.errors }}</div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="form-label">Mobile Number</label>
+                {{ form.mobile_number|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.mobile_number.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Aadhaar Number</label>
+                {{ form.aadhar_number|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.aadhar_number.errors }}</div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="form-label">School / College / Club</label>
+                {{ form.school_name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.school_name.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Representing From</label>
+                {{ form.representing_from|add_class:"form-control" }}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="reg-card">
+          <div class="reg-section-header">
+            <div class="step-num">2</div>
+            <h5>Location</h5>
+          </div>
+          <div class="reg-section-body">
+
+            <div class="mb-3">
+              <label class="form-label">Address</label>
+              {{ form.address|add_class:"form-control" }}
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">State</label>
+                {{ form.state|add_class:"form-select" }}
+                <div class="text-danger small">{{ form.state.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">District</label>
+                {{ form.district_fk|add_class:"form-select" }}
+                <div class="text-danger small">{{ form.district_fk.errors }}</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <button type="submit" class="btn-save">Save Changes</button>
+          <a href="{% url 'accounts:profile' %}" class="btn-cancel">Cancel</a>
+        </div>
+
+      </form>
+
+      <div class="text-center mt-4">
+        <a href="{% url 'accounts:profile' %}" class="back-link">
+          <i class="bi bi-arrow-left"></i> Back to Profile
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 {% endblock %}

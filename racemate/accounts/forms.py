@@ -3,7 +3,7 @@
 from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-
+from .models import Profile
 from .models import Registration
 from app_admin.models import DimState, DimDistrict, DimEventCategory
 
@@ -32,7 +32,7 @@ class RegistrationForm(forms.ModelForm):
     class Meta:
         model = Registration
         fields = [
-        'name', 'fathers_name', 'date_of_birth', 'gender' ,'profession',
+        'name', 'fathers_name', 'date_of_birth', 'gender' ,'email','school_name',
         'address', 'representing_from', 'mobile_number', 'aadhar_number',
         'events', 'state', 'district_fk',
         ]
@@ -90,3 +90,30 @@ class RegistrationForm(forms.ModelForm):
         if state and district and district.state_id != state.id:
             raise forms.ValidationError("Selected district doesn't belong to selected state.")
         return cleaned
+
+
+
+class UserProfileForm(forms.ModelForm):
+    # We manually add User fields so we can edit them in the same form
+    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+    class Meta:
+        model = Profile
+        fields = [
+            'phone_number', 'dob', 'bio', 'blood_group', 
+            'pan_number', 'aadhaar_number', 'profile_image', 
+            'address_line_1', 'city', 'state'
+        ]
+        widgets = {
+            'dob': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'bio': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'profile_image': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pre-fill First and Last name from the User object
+        if self.instance and self.instance.user:
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name

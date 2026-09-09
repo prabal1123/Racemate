@@ -1,0 +1,55 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+
+    {% if original %}
+
+        <li>
+            <a
+                href="{% url 'app_tournaments:fixture_dashboard' original.pk %}"
+            >
+                Fixture Dashboard
+            </a>
+        </li>
+
+        <li>
+            <a
+                href="{% url 'app_tournaments:results' original.pk %}"
+            >
+                Results
+            </a>
+        </li>
+
+        {% if not original.fixtures_generated_at %}
+
+            <li>
+                <a
+                    href="{% url 'app_tournaments:generate_fixtures' original.pk %}"
+                    class="addlink"
+                >
+                    Generate Fixtures
+                </a>
+            </li>
+
+        {% else %}
+
+            <li>
+                <span
+                    style="
+                        display: block;
+                        padding: 10px 15px;
+                        background: #417690;
+                        color: white;
+                        border-radius: 4px;
+                    "
+                >
+                    Fixtures Generated
+                </span>
+            </li>
+
+        {% endif %}
+
+    {% endif %}
+{% endblock %}

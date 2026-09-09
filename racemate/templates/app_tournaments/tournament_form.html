@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 950px;">
+    <h2 class="mb-4">{{ title }}</h2>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Name</label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Sport</label>
+                {{ form.sport }}
+                {% if form.sport.errors %}<div class="text-danger small">{{ form.sport.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Venue</label>
+                {{ form.venue }}
+                {% if form.venue.errors %}<div class="text-danger small">{{ form.venue.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Registration Start</label>
+                {{ form.registration_start }}
+                {% if form.registration_start.errors %}<div class="text-danger small">{{ form.registration_start.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Registration End</label>
+                {{ form.registration_end }}
+                {% if form.registration_end.errors %}<div class="text-danger small">{{ form.registration_end.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Tournament Start</label>
+                {{ form.tournament_start }}
+                {% if form.tournament_start.errors %}<div class="text-danger small">{{ form.tournament_start.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Tournament End (optional)</label>
+                {{ form.tournament_end }}
+                {% if form.tournament_end.errors %}<div class="text-danger small">{{ form.tournament_end.errors }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-12">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+            </div>
+        </div>
+
+        <hr class="my-4">
+        <h4 class="mb-3">Tournament Categories</h4>
+
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+        {% endif %}
+
+        <div id="category-forms">
+            {% for cform in formset %}
+            <div class="card mb-3 category-form">
+                <div class="card-body">
+                    {{ cform.id }}
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Category</label>
+                            {{ cform.category }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Entry Format</label>
+                            {{ cform.entry_format }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fixture Type</label>
+                            {{ cform.fixture_type }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Scoring Rule</label>
+                            {{ cform.scoring_rule }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Entry Fee</label>
+                            {{ cform.entry_fee }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Maximum Entries</label>
+                            {{ cform.maximum_entries }}
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center gap-3 mt-4">
+                            <div class="form-check">
+                                {{ cform.registration_open }}
+                                <label class="form-check-label">Registration Open</label>
+                            </div>
+                            <div class="form-check">
+                                {{ cform.is_active }}
+                                <label class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                        {% if cform.instance.pk %}
+                        <div class="col-md-4 mt-4">
+                            <div class="form-check">
+                                {{ cform.DELETE }}
+                                <label class="form-check-label text-danger">Delete this category</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="empty-form" class="d-none">
+            <div class="card mb-3 category-form">
+                <div class="card-body">
+                    {{ formset.empty_form.id }}
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Category</label>
+                            {{ formset.empty_form.category }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Entry Format</label>
+                            {{ formset.empty_form.entry_format }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fixture Type</label>
+                            {{ formset.empty_form.fixture_type }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Scoring Rule</label>
+                            {{ formset.empty_form.scoring_rule }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Entry Fee</label>
+                            {{ formset.empty_form.entry_fee }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Maximum Entries</label>
+                            {{ formset.empty_form.maximum_entries }}
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center gap-3 mt-4">
+                            <div class="form-check">
+                                {{ formset.empty_form.registration_open }}
+                                <label class="form-check-label">Registration Open</label>
+                            </div>
+                            <div class="form-check">
+                                {{ formset.empty_form.is_active }}
+                                <label class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" id="add-category-btn" class="btn btn-outline-dark mb-4">+ Add another Tournament category</button>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-dark">Save</button>
+            <a href="{% url 'app_tournaments:tournament_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const addBtn = document.getElementById("add-category-btn");
+    const container = document.getElementById("category-forms");
+    const totalForms = document.getElementById("id_categories-TOTAL_FORMS");
+    const emptyFormHtml = document.getElementById("empty-form").innerHTML;
+
+    addBtn.addEventListener("click", function () {
+        const formIndex = parseInt(totalForms.value, 10);
+        const newFormHtml = emptyFormHtml.replaceAll("__prefix__", formIndex);
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = newFormHtml;
+        container.appendChild(wrapper.firstElementChild);
+
+        totalForms.value = formIndex + 1;
+    });
+});
+</script>
+{% endblock %}

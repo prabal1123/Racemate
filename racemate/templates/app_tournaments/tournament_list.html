@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Tournaments{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Tournaments</h2>
+        <a href="{% url 'app_tournaments:tournament_create' %}" class="btn btn-dark">+ Add Tournament</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Sport</th>
+                    <th>Venue</th>
+                    <th>Registration Window</th>
+                    <th>Tournament Start</th>
+                    <th>Status</th>
+                    <th>Categories</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tournament in tournaments %}
+                <tr>
+                    <td>{{ tournament.name }}</td>
+                    <td>{{ tournament.sport.name }}</td>
+                    <td>{{ tournament.venue }}</td>
+                    <td>{{ tournament.registration_start|date:"M d, Y H:i" }} — {{ tournament.registration_end|date:"M d, Y H:i" }}</td>
+                    <td>{{ tournament.tournament_start|date:"M d, Y H:i" }}</td>
+                    <td><span class="badge bg-secondary">{{ tournament.status }}</span></td>
+                    <td>{{ tournament.categories.count }}</td>
+                    <td>
+                        <a href="{% url 'app_tournaments:tournament_edit' tournament.pk %}" class="btn btn-sm btn-outline-dark">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center text-muted">No tournaments yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

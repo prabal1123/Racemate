@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Tournament Entries{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Tournament Entries</h2>
+    </div>
+
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-auto">
+            <select name="category" class="form-select" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                <option value="{{ c.pk }}" {% if selected_category == c.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ c.tournament.name }} — {{ c.category.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                {% for s in statuses %}
+                <option value="{{ s.pk }}" {% if selected_status == s.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ s.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Entry</th>
+                    <th>Tournament Category</th>
+                    <th>Players</th>
+                    <th>Status</th>
+                    <th>Seed</th>
+                    <th>Created At</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td>{{ entry.display_name|default:entry }}</td>
+                    <td>{{ entry.tournament_category.tournament.name }} — {{ entry.tournament_category.category.name }}</td>
+                    <td>
+                        {% for p in entry.players.all %}
+                            {{ p.player.get_full_name|default:p.player.username }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            —
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <span class="badge
+                            {% if entry.status.code == 'confirmed' %}bg-success
+                            {% elif entry.status.code == 'waitlisted' %}bg-warning text-dark
+                            {% elif entry.status.code == 'pending' %}bg-secondary
+                            {% else %}bg-danger{% endif %}">
+                            {{ entry.status.name }}
+                        </span>
+                    </td>
+                    <td>{{ entry.seed|default:"-" }}</td>
+                    <td>{{ entry.created_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'app_tournaments:tournament_entry_edit' entry.pk %}" class="btn btn-sm btn-outline-dark">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No entries found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

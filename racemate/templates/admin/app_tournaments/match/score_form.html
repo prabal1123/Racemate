@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Enter Score — {{ match }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sc-table th {
+        background: #1c1c1e;
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .sc-table input[type="number"] {
+        max-width: 100px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 900px;">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a class="rm-dd-item" href="{% url 'app_tournaments:match_list' %}">Matches</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ change_url }}">{{ match }}</a>
+            </li>
+            <li class="breadcrumb-item active">Enter Score</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4 text-center">
+
+            <div class="text-muted text-uppercase small fw-semibold mb-2">
+                {{ match.tournament_round }}
+            </div>
+
+            <div class="fs-3 fw-bold mb-3">
+                {{ match.entry_one }}
+                <span class="text-muted fs-6 fw-normal mx-2">VS</span>
+                {{ match.entry_two }}
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+
+                <span class="badge rounded-pill bg-light text-dark border">
+                    Match {{ match.match_number }}
+                </span>
+
+                <span class="badge rounded-pill bg-light text-dark border">
+                    Best of {{ scoring_rule.best_of_sets }} sets
+                </span>
+
+                <span class="badge rounded-pill bg-light text-dark border">
+                    Points to win {{ scoring_rule.points_to_win_set }}
+                </span>
+
+                <span class="badge rounded-pill bg-light text-dark border">
+                    Winning margin {{ scoring_rule.winning_margin }}
+                </span>
+
+                {% if scoring_rule.maximum_points %}
+                    <span class="badge rounded-pill bg-light text-dark border">
+                        Max points {{ scoring_rule.maximum_points }}
+                    </span>
+                {% endif %}
+
+            </div>
+
+        </div>
+    </div>
+
+    {% if match.winner %}
+        <div class="alert alert-success">
+            Match winner: <strong>{{ match.winner }}</strong>
+        </div>
+    {% endif %}
+
+    {% if formset.non_form_errors %}
+        <div class="alert alert-danger">
+            {{ formset.non_form_errors }}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ formset.management_form }}
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="table-responsive">
+                <table class="table sc-table mb-0 align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Set</th>
+                            <th>{{ match.entry_one }}</th>
+                            <th>{{ match.entry_two }}</th>
+                            <th>Completed</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for form in formset %}
+
+                            <tr>
+                                <td>
+                                    {{ form.id }}
+                                    {{ form.set_number }}
+                                    <strong>Set {{ form.set_number.value }}</strong>
+
+                                    {% if form.set_number.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.set_number.errors }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ form.entry_one_score }}
+
+                                    {% if form.entry_one_score.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.entry_one_score.errors }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ form.entry_two_score }}
+
+                                    {% if form.entry_two_score.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.entry_two_score.errors }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ form.is_completed }}
+
+                                    {% if form.is_completed.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.is_completed.errors }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            {% if form.non_field_errors %}
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="text-danger small">
+                                            {{ form.non_field_errors }}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endif %}
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+
+            <button type="submit" class="btn btn-primary btn-lg">
+                Save Scores
+            </button>
+
+            <a href="{{ dashboard_url }}" class="btn btn-outline-secondary btn-lg">
+                Back to Fixture Dashboard
+            </a>
+
+            <a href="{{ change_url }}" class="btn btn-outline-secondary btn-lg">
+                Open Full Match Admin
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}

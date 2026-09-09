@@ -41,7 +41,7 @@ class Participation(models.Model):
         on_delete=models.CASCADE,
         related_name="participation"
     )
-
+    is_collected = models.BooleanField(default=False, help_text="Physical Bib Collection Status")
     is_participated = models.BooleanField(default=False)
     age_group = models.CharField(max_length=50, blank=True)
     gender = models.CharField(max_length=16, blank=True)

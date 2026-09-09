@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Generate Fixtures — {{ tournament_category }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'admin:app_tournaments_tournamentcategory_changelist' %}">
+                    Tournament Categories
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ change_url }}">{{ tournament_category }}</a>
+            </li>
+            <li class="breadcrumb-item active">Generate Fixtures</li>
+        </ol>
+    </nav>
+
+    <h1 class="fw-bold mb-4">Generate Fixtures</h1>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <h5 class="fw-bold mb-0">Fixture Preview</h5>
+        </div>
+
+        <div class="card-body px-4 pb-4">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="text-muted small text-uppercase">Tournament</div>
+                        <div class="fw-semibold">{{ tournament_category.tournament }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="text-muted small text-uppercase">Event / Category</div>
+                        <div class="fw-semibold">{{ tournament_category.category }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="text-muted small text-uppercase">Fixture Type</div>
+                        <div class="fw-semibold">{{ fixture_type_display }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="text-muted small text-uppercase">Scoring Rule</div>
+                        <div class="fw-semibold">
+                            {{ tournament_category.scoring_rule|default:"Not assigned" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <div class="text-muted small text-uppercase">Confirmed Entries</div>
+                        <div class="fw-semibold">{{ confirmed_entries }}</div>
+                    </div>
+                </div>
+
+                {% if is_knockout %}
+
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small text-uppercase">Bracket Size</div>
+                            <div class="fw-semibold">
+                                {% if bracket_size %}
+                                    {{ bracket_size }} slots
+                                {% else %}
+                                    Not available
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small text-uppercase">Byes</div>
+                            <div class="fw-semibold">{{ bye_count }}</div>
+                        </div>
+                    </div>
+
+                {% elif is_round_robin %}
+
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small text-uppercase">Total Matches</div>
+                            <div class="fw-semibold">{{ round_robin_match_count }}</div>
+                        </div>
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+            {% if is_knockout %}
+                <div class="alert alert-primary mt-3 mb-0">
+                    Seeded entries will use standard bracket positions.
+                    Unseeded entries will be placed randomly.
+                </div>
+            {% elif is_round_robin %}
+                <div class="alert alert-primary mt-3 mb-0">
+                    Every confirmed entry will play every other
+                    confirmed entry exactly once.
+                </div>
+            {% endif %}
+
+            {% if validation_problems %}
+
+                <div class="alert alert-warning mt-3 mb-0">
+                    <strong>Fixtures cannot be generated:</strong>
+                    <ul class="mb-0">
+                        {% for problem in validation_problems %}
+                            <li>{{ problem }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-success mt-3 mb-0">
+                    {% if is_knockout %}
+                        This will generate the complete knockout
+                        bracket, including rounds, matches and byes.
+                    {% elif is_round_robin %}
+                        This will generate all pairwise Round Robin
+                        matches for the confirmed entries.
+                    {% endif %}
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="d-flex gap-2 flex-wrap">
+
+            {% if can_generate %}
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Generate {{ fixture_type_display }} Fixtures
+                </button>
+            {% endif %}
+
+            <a href="{{ change_url }}" class="btn btn-outline-secondary btn-lg">
+                Cancel
+            </a>
+
+        </div>
+    </form>
+
+</div>
+{% endblock %}
