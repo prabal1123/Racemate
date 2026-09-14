@@ -40,7 +40,7 @@ urlpatterns = [
 
     # Top-level Home/Auth
     path("", accounts_views.home, name="home"),
-    path("register/", accounts_views.register, name="register"),
+    # path("register/", accounts_views.register, name="register"),
     path("ajax/districts/", accounts_views.ajax_load_districts, name="ajax_load_districts"),
 
     # App Routing

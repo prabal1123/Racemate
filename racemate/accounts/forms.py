@@ -91,7 +91,20 @@ class RegistrationForm(forms.ModelForm):
             raise forms.ValidationError("Selected district doesn't belong to selected state.")
         return cleaned
 
+class PublicRegistrationForm(RegistrationForm):
+    """
+    Used on the public, single-event registration page (/register/<uuid>/).
 
+    The event a participant registers for is determined entirely by the
+    uuid in the URL (see accounts.views.register), never by form input.
+    So this form drops the 'events' field completely: it won't be
+    rendered, won't be validated, and can't be tampered with via POST.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('events', None)
+        
 
 class UserProfileForm(forms.ModelForm):
     # We manually add User fields so we can edit them in the same form

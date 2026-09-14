@@ -49,11 +49,6 @@
 
     <div class="hero-buttons">
 
-      <a href="{% url 'accounts:register' %}"
-         class="btn hero-outline">
-        Create Registration
-      </a>
-
       <a href="#events"
          class="btn hero-primary">
         Browse Events
@@ -308,12 +303,27 @@
 
           {% if event.status == "LIVE NOW" or event.status == "LIVE_NOW" or event.status == "REGISTRATION OPEN" or event.status == "REGISTRATION_OPEN" %}
 
-            <a href="{% url 'accounts:register' %}?{{ event.register_query }}"
-               class="btn-register btn-register--{{ event.sport }}">
+            {% if event.registration_links %}
 
-              Register Now
+              {% for link in event.registration_links %}
 
-            </a>
+                <a href="{{ link.url }}"
+                   class="btn-register btn-register--{{ event.sport }}"
+                   {% if not forloop.last %}style="margin-bottom: 0.5rem;"{% endif %}>
+
+                  Register — {{ link.label }}
+
+                </a>
+
+              {% endfor %}
+
+            {% else %}
+
+              <button class="btn-notify" disabled>
+                Registration Unavailable
+              </button>
+
+            {% endif %}
 
           {% else %}
 

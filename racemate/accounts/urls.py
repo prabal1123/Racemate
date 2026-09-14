@@ -61,7 +61,9 @@ app_name = 'accounts'
 urlpatterns = [
     # --- Public Pages ---
     path('', views.home, name='home'),
-    path('register/', views.register, name='register'),
+    # path('register/', views.register, name='register'),
+        path('register/event/<uuid:event_uuid>/', views.register_race_event, name='register_race_event'),
+    path('register/tournament-category/<uuid:category_uuid>/', views.register_tournament_category, name='register_tournament_category'),
     path('ajax/districts/', views.ajax_load_districts, name='ajax_load_districts'),
     path('registration-success/', views.registration_success, name='registration_success'),
     
@@ -99,5 +101,17 @@ urlpatterns = [
 
     path('ajax/tournament-categories/', views.ajax_tournament_categories, name='ajax_tournament_categories'),
     path('ajax/partner-search/', views.ajax_partner_search, name='ajax_partner_search'),
+
+    path(
+    "register/tournament/<uuid:tournament_uuid>/",
+    views.register_tournament,
+    name="register_tournament",
+    ),
+    path(
+    "register/race/<uuid:race_uuid>/type/<int:event_type_id>/",
+    views.register_race_by_type,
+    name="register_race_by_type",
+),
 ]
+
 
