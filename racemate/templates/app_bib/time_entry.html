@@ -3,9 +3,9 @@
 {% block title %}Live Time Entry — Racemate{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4 rm-timing-page">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-primary">Live Timing Sheet</h2>
+    <h2 class="fw-bold text-primary mb-0">Live Timing Sheet</h2>
     <span class="badge bg-success">
       <i class="bi bi-broadcast"></i> Live Mode Active
     </span>
@@ -46,29 +46,30 @@
 
   <div class="card shadow-sm border-0 overflow-hidden">
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0 rm-timing-table">
         <thead class="table-dark">
           <tr>
             <th class="ps-4">Bib</th>
             <th>Athlete Name</th>
             <th>Heat / Group</th> 
             <th>Category</th>
-            <th class="pe-4" style="width: 300px;">Finish Time (MM:SS)</th>
+            <th style="min-width: 280px;">Lap Timings</th>
+            <th class="pe-4" style="width: 130px;">Finish Time</th>
           </tr>
         </thead>
         <tbody id="timing-table-body">
           {% for r in registrations %}
           <tr id="row-{{ r.id }}">
-            <td class="ps-4">
+            <td class="ps-4" data-label="Bib">
               <span class="badge bg-dark font-monospace" style="font-size: 0.9rem;">
                 {{ r.bib_public }}
               </span>
             </td>
-            <td>
+            <td data-label="Athlete">
               <div class="fw-bold text-dark">{{ r.name }}</div>
               <small class="text-muted">{{ r.registration_id }}</small>
             </td>
-            <td>
+            <td data-label="Heat / Group">
               {# UPDATED: Displaying simple heat_number #}
               {% if r.heat_number %}
                 <span class="badge bg-info text-dark shadow-sm">
@@ -78,29 +79,50 @@
                 <span class="text-muted small italic">General</span>
               {% endif %}
             </td>
-            <td>
+            <td data-label="Category">
               <span class="text-secondary small">{{ r.gender|title }}</span>
               <br>
               <span class="badge bg-secondary opacity-75">{{ r.age_display }} yrs</span>
             </td>
-            <td class="pe-4">
-              <div class="input-group">
-                <input type="text" 
-                       id="time-{{ r.id }}" 
-                       class="form-control border-primary timing-input" 
-                       placeholder="MM:SS" 
-                       value="{{ r.current_time|default:'' }}"
-                       data-reg-id="{{ r.id }}">
-                <button class="btn btn-primary px-3" onclick="manualSave('{{ r.id }}')">
-                  <i class="bi bi-save"></i>
+            <td data-label="Lap Timings">
+              <div class="lap-cell"
+                   id="laps-{{ r.id }}"
+                   data-reg-id="{{ r.id }}"
+                   data-next-lap="{{ r.next_lap_number }}">
+                {% for slot in r.lap_slots %}
+                  <div class="lap-chip" data-lap-number="{{ slot.number }}">
+                    {% if slot.removable %}
+                      <button type="button" class="lap-remove" onclick="removeLap('{{ r.id }}', {{ slot.number }})" title="Remove this lap">&times;</button>
+                    {% endif %}
+                    <label>Lap {{ slot.number }}</label>
+                    <div class="input-group input-group-sm">
+                      <input type="text"
+                             id="lap-{{ r.id }}-{{ slot.number }}"
+                             class="form-control border-primary lap-input"
+                             placeholder="MM:SS"
+                             value="{{ slot.value }}"
+                             data-reg-id="{{ r.id }}"
+                             data-lap-number="{{ slot.number }}"
+                             data-saved="{% if slot.value %}true{% else %}false{% endif %}">
+                      <button class="btn btn-primary" onclick="saveLap('{{ r.id }}', {{ slot.number }})" title="Save lap">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    </div>
+                    <div id="status-{{ r.id }}-{{ slot.number }}" class="lap-status"></div>
+                  </div>
+                {% endfor %}
+                <button type="button" class="add-lap-chip" onclick="addLap('{{ r.id }}')" title="Add another lap for this bib">
+                  <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">Lap</span>
                 </button>
               </div>
-              <div id="status-{{ r.id }}" class="small mt-1" style="height: 15px;"></div>
+            </td>
+            <td class="pe-4" data-label="Finish Time">
+              <span id="finish-{{ r.id }}" class="fw-bold finish-badge">{{ r.current_time|default:"—" }}</span>
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center py-5">
+            <td colspan="6" class="text-center py-5">
                <p class="text-muted">No "Present" candidates found for this selection.</p>
                <a href="{% url 'app_bib:start_list' %}" class="btn btn-sm btn-outline-primary">Check Attendance</a>
             </td>
@@ -112,42 +134,236 @@
   </div>
 </div>
 
-<script>
-// We use the ID directly as the regId for the API call
-const BASE_RESULTS_URL = "/results/update/"; 
+<style>
+.rm-timing-page .card { border-radius: 14px; }
 
-function manualSave(regId) {
-    const inputField = document.getElementById(`time-${regId}`);
-    const statusDiv = document.getElementById(`status-${regId}`);
+/* --- Lap chips --- */
+.lap-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  padding: 4px 0;
+}
+.lap-chip {
+  position: relative;
+  background: #f7f9fc;
+  border: 1px solid #dde3ec;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 100px;
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+.lap-chip:hover {
+  box-shadow: 0 3px 10px rgba(20, 30, 60, 0.08);
+  border-color: #c3ccdb;
+}
+.lap-chip label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #8792a2;
+  margin: 0;
+}
+.lap-chip .lap-input {
+  width: 78px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.lap-chip .lap-status {
+  height: 14px;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+.lap-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #e0a8ae;
+  background: #fff;
+  color: #c0384a;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.lap-remove:hover { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+.add-lap-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  border: 1.5px dashed #c3ccdb;
+  border-radius: 10px;
+  background: transparent;
+  color: #5b6b82;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0 12px;
+}
+.add-lap-chip:hover {
+  background: #eef2f8;
+  border-color: #8fa2bf;
+  color: #2f3d52;
+}
+
+.finish-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #eef6ee;
+  color: #1e6b2e;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Mobile: stack table into cards --- */
+@media (max-width: 767.98px) {
+  .rm-timing-table thead { display: none; }
+  .rm-timing-table, .rm-timing-table tbody, .rm-timing-table tr, .rm-timing-table td {
+    display: block;
+    width: 100%;
+  }
+  .rm-timing-table tr {
+    margin: 12px;
+    border: 1px solid #e5e9f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(20,30,60,0.05);
+  }
+  .rm-timing-table td {
+    border: none !important;
+    padding: 8px 0 !important;
+  }
+  .rm-timing-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #8792a2;
+    margin-bottom: 4px;
+  }
+  .lap-chip .lap-input { width: 100px; }
+}
+</style>
+
+<script>
+// We use the registration ID directly as the regId for the API call
+const BASE_LAP_URL = "/results/update-lap/";
+
+function saveLap(regId, lapNumber) {
+    const inputField = document.getElementById(`lap-${regId}-${lapNumber}`);
+    const statusDiv = document.getElementById(`status-${regId}-${lapNumber}`);
+    const finishSpan = document.getElementById(`finish-${regId}`);
     const timeValue = inputField.value;
 
-    statusDiv.innerHTML = '<span class="text-muted small">Saving...</span>';
+    statusDiv.innerHTML = '<span class="text-muted">Saving...</span>';
 
-    fetch(`${BASE_RESULTS_URL}${regId}/`, {
+    fetch(`${BASE_LAP_URL}${regId}/${lapNumber}/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': '{{ csrf_token }}',
             'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ "end_time_mmss": timeValue })
+        body: JSON.stringify({ "value": timeValue })
     })
     .then(response => response.json())
     .then(data => {
-        if (data.ok || data.status === 'success') {
+        if (data.ok) {
             inputField.classList.add('is-valid');
-            statusDiv.innerHTML = '<span class="text-success small">Saved!</span>';
+            inputField.dataset.saved = timeValue.trim() !== '' ? 'true' : 'false';
+            statusDiv.innerHTML = '<span class="text-success">Saved!</span>';
+            if (finishSpan) {
+                finishSpan.textContent = data.finish_time || '—';
+            }
             setTimeout(() => {
                 inputField.classList.remove('is-valid');
                 statusDiv.innerHTML = '';
             }, 2000);
         } else {
-            statusDiv.innerHTML = '<span class="text-danger small">Error</span>';
+            statusDiv.innerHTML = `<span class="text-danger">${data.error || 'Error'}</span>`;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        statusDiv.innerHTML = '<span class="text-danger small">Network Error</span>';
+        statusDiv.innerHTML = '<span class="text-danger">Network Error</span>';
+    });
+}
+
+function addLap(regId) {
+    const container = document.getElementById(`laps-${regId}`);
+    const addBtn = container.querySelector('.add-lap-chip');
+    const nextLap = parseInt(container.dataset.nextLap, 10);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'lap-chip';
+    wrapper.setAttribute('data-lap-number', nextLap);
+    wrapper.innerHTML = `
+      <button type="button" class="lap-remove" onclick="removeLap('${regId}', ${nextLap})" title="Remove this lap">&times;</button>
+      <label>Lap ${nextLap}</label>
+      <div class="input-group input-group-sm">
+        <input type="text" id="lap-${regId}-${nextLap}" class="form-control border-primary lap-input"
+               placeholder="MM:SS" data-reg-id="${regId}" data-lap-number="${nextLap}" data-saved="false">
+        <button class="btn btn-primary" onclick="saveLap('${regId}', ${nextLap})" title="Save lap">
+          <i class="bi bi-check-lg"></i>
+        </button>
+      </div>
+      <div id="status-${regId}-${nextLap}" class="lap-status"></div>
+    `;
+
+    container.insertBefore(wrapper, addBtn);
+    container.dataset.nextLap = nextLap + 1;
+    wrapper.querySelector('input').focus();
+}
+
+function removeLap(regId, lapNumber) {
+    const wrapper = document.querySelector(`#laps-${regId} .lap-chip[data-lap-number="${lapNumber}"]`);
+    const inputField = document.getElementById(`lap-${regId}-${lapNumber}`);
+    if (!wrapper) return;
+
+    const hadSavedValue = inputField && inputField.dataset.saved === 'true';
+
+    if (!hadSavedValue) {
+        // Never saved (added by mistake) — just remove it, no server call needed.
+        wrapper.remove();
+        return;
+    }
+
+    // Was saved — clear it server-side too, and refresh the finish time shown.
+    fetch(`${BASE_LAP_URL}${regId}/${lapNumber}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ "value": "" })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const finishSpan = document.getElementById(`finish-${regId}`);
+        if (finishSpan) {
+            finishSpan.textContent = (data && data.finish_time) || '—';
+        }
+        wrapper.remove();
+    })
+    .catch(error => {
+        console.error('Error removing lap:', error);
+        wrapper.remove();
     });
 }
 </script>

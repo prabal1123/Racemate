@@ -8,7 +8,7 @@ from django.utils.dateparse import parse_datetime
 from django.apps import apps
 from datetime import timedelta
 
-from .models import Participation
+from .models import Participation, Lap
 
 # registration model
 Registration = apps.get_model("accounts", "Registration")
@@ -489,4 +489,83 @@ def update_participation(request, start_entry_id):
         "total_lap_time_seconds": total_seconds,
         "total_lap_time_display": total_display,
         "end_time_mmss": participation.end_time_mmss,
+    })
+
+@require_POST
+@staff_member_required
+def update_lap(request, start_entry_id, lap_number):
+    """
+    Save a single lap-crossing time for one participant.
+
+    Body: {"value": "MM:SS" or "H:MM:SS" or "" (to clear)}
+
+    lap_time_mmss is treated as a cumulative elapsed-time reading (same
+    convention the old single Finish Time field used). After saving, the
+    participant's overall finish time (end_time_mmss / total_lap_time) is
+    recomputed as the value of the highest lap_number that currently has
+    a saved time — i.e. the last lap entered becomes the finish time.
+    """
+    import json
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return HttpResponseBadRequest("Invalid JSON")
+
+    value = payload.get("value", "")
+
+    entry = get_object_or_404(Registration, pk=start_entry_id)
+    participation, created = Participation.objects.get_or_create(start_entry=entry)
+
+    if created:
+        participation.gender = getattr(entry, "gender", "")
+        participation.age_group = (
+            getattr(entry, "category", None)
+            or getattr(entry, "age_category", None)
+            or ""
+        )
+
+    lap, _ = Lap.objects.get_or_create(
+        participation=participation,
+        lap_number=lap_number,
+    )
+
+    if value is None or str(value).strip() == "":
+        lap.lap_time_mmss = None
+        lap.save()
+    else:
+        td = _parse_mmss_to_timedelta(str(value))
+        if td is None:
+            return JsonResponse(
+                {"ok": False, "error": "Enter time as MM:SS or H:MM:SS (e.g. 1:23 or 01:02:03)."},
+                status=400,
+            )
+        hours, rem = divmod(int(td.total_seconds()), 3600)
+        minutes, seconds = divmod(rem, 60)
+        lap.lap_time_mmss = f"{hours}:{minutes:02d}:{seconds:02d}" if hours else f"{minutes}:{seconds:02d}"
+        lap.save()
+
+    # Recompute finish time = value of the highest lap_number that has a time.
+    last_recorded_lap = (
+        participation.laps
+        .exclude(lap_time_mmss__isnull=True)
+        .exclude(lap_time_mmss="")
+        .order_by("-lap_number")
+        .first()
+    )
+
+    if last_recorded_lap:
+        participation.end_time_mmss = last_recorded_lap.lap_time_mmss
+        participation.total_lap_time = _parse_mmss_to_timedelta(last_recorded_lap.lap_time_mmss)
+    else:
+        participation.end_time_mmss = None
+        participation.total_lap_time = None
+
+    participation.save()
+
+    return JsonResponse({
+        "ok": True,
+        "lap_number": lap_number,
+        "value": lap.lap_time_mmss,
+        "finish_time": participation.end_time_mmss,
     })

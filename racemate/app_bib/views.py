@@ -1096,14 +1096,55 @@ def auto_assign_heats(request):
     messages.success(request, f"Assigned {participants.count()} athletes into heats.")
     return redirect(reverse('app_bib:heat_list') + f"?race_id={race_id}")
 
+# @login_required
+# def time_entry_list_create(request):
+#     """
+#     Final Stage: Recording results for those at the finish line.
+#     """
+#     races = Race.objects.all()
+#     selected_race_id = request.GET.get('race_id')
+    
+#     qs = Registration.objects.filter(
+#         participation__is_participated=True
+#     ).select_related('race', 'participation', 'district_fk')
+
+#     if selected_race_id:
+#         qs = qs.filter(race_id=selected_race_id)
+
+#     registrations = list(qs)
+#     today = date.today()
+
+#     for reg in registrations:
+#         dob = getattr(reg, 'date_of_birth', None)
+#         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day)) if dob else None
+#         reg.age_display = age if age is not None else "—"
+#         reg.bib_public = RegistrationBibListView._compute_short_bib(reg.bib_id)
+#         reg.current_time = reg.participation.end_time_mmss if hasattr(reg, 'participation') else ""
+
+#     context = {
+#         'registrations': registrations,
+#         'races': races,
+#         'selected_race_id': selected_race_id,
+#     }
+#     return render(request, 'app_bib/time_entry.html', context)
+
 @login_required
 def time_entry_list_create(request):
     """
     Final Stage: Recording results for those at the finish line.
+
+    Each bib gets one "Lap Timings" cell pre-filled with the number of laps
+    configured for its race + gender (app_results.LapPlan), plus any extra
+    laps already recorded for it. Staff can also add more laps on the fly
+    with the "+ Lap" button in the UI, with no admin config required.
+    The "Finish Time" is derived from the highest lap number that has a
+    saved time (see app_results.views.update_lap).
     """
+    from app_results.models import get_laps_required, Lap
+
     races = Race.objects.all()
     selected_race_id = request.GET.get('race_id')
-    
+
     qs = Registration.objects.filter(
         participation__is_participated=True
     ).select_related('race', 'participation', 'district_fk')
@@ -1114,12 +1155,38 @@ def time_entry_list_create(request):
     registrations = list(qs)
     today = date.today()
 
+    # Pull all laps for the visible participations in one query.
+    participation_ids = [
+        reg.participation.id for reg in registrations if hasattr(reg, 'participation')
+    ]
+    laps_by_participation = {}
+    for lap in Lap.objects.filter(participation_id__in=participation_ids):
+        laps_by_participation.setdefault(lap.participation_id, {})[lap.lap_number] = lap.lap_time_mmss
+
     for reg in registrations:
         dob = getattr(reg, 'date_of_birth', None)
         age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day)) if dob else None
         reg.age_display = age if age is not None else "—"
         reg.bib_public = RegistrationBibListView._compute_short_bib(reg.bib_id)
         reg.current_time = reg.participation.end_time_mmss if hasattr(reg, 'participation') else ""
+        reg.laps_required = get_laps_required(reg)
+
+        existing = laps_by_participation.get(
+            reg.participation.id if hasattr(reg, 'participation') else None, {}
+        )
+        # Pre-fill the configured number of lap boxes...
+        reg.lap_slots = [
+            {'number': n, 'value': existing.get(n, ''), 'removable': False}
+            for n in range(1, reg.laps_required + 1)
+        ]
+        # ...plus any extra laps already saved beyond the configured count
+        # (e.g. added earlier via the "+ Lap" button), so they persist on reload.
+        # Only re-show ones that still have an actual value — once a removed
+        # extra lap is cleared, it should disappear rather than reappear empty.
+        # These are "removable" since they weren't part of the planned count.
+        for n in sorted(k for k, v in existing.items() if k > reg.laps_required and v):
+            reg.lap_slots.append({'number': n, 'value': existing.get(n, ''), 'removable': True})
+        reg.next_lap_number = (reg.lap_slots[-1]['number'] + 1) if reg.lap_slots else 1
 
     context = {
         'registrations': registrations,
@@ -1127,6 +1194,7 @@ def time_entry_list_create(request):
         'selected_race_id': selected_race_id,
     }
     return render(request, 'app_bib/time_entry.html', context)
+
 
 # Manual assignment and exports kept as is...
 @staff_member_required
