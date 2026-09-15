@@ -1,0 +1,395 @@
+{% load static %}
+{% load widget_tweaks %}
+{% include 'base.html' %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+
+  :root {
+    --primary: #0052cc;
+    --primary-light: #e8f0fe;
+    --accent: #ff4d00;
+    --dark: #0a0f1e;
+    --mid: #3a4460;
+    --light: #f4f6fb;
+    --border: #dde3f0;
+    --success: #00b894;
+    --radius: 14px;
+    --card-shadow: 0 8px 32px rgba(10,15,30,0.10);
+  }
+
+  body { background: var(--light); font-family: 'Barlow', sans-serif; }
+
+  .reg-hero {
+    background: linear-gradient(120deg, #0a0f1e 60%, #0052cc 100%);
+    padding: 48px 0 36px; text-align: center; position: relative; overflow: hidden;
+  }
+  .reg-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(45deg, transparent, transparent 38px, rgba(255,255,255,0.03) 38px, rgba(255,255,255,0.03) 40px);
+  }
+  .reg-hero h1 {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 3rem; font-weight: 800; color: #fff;
+    letter-spacing: 2px; text-transform: uppercase; margin: 0; position: relative;
+  }
+  .reg-hero h1 span { color: var(--accent); }
+  .reg-hero p { color: rgba(255,255,255,0.6); font-size: 1rem; margin-top: 8px; position: relative; }
+
+  .reg-card {
+    background: #fff; border-radius: var(--radius); box-shadow: var(--card-shadow);
+    border: 1px solid var(--border); overflow: hidden; margin-bottom: 40px;
+  }
+  .reg-section-header {
+    display: flex; align-items: center; gap: 10px; padding: 18px 28px;
+    background: var(--light); border-bottom: 1px solid var(--border);
+  }
+  .reg-section-header .step-num {
+    width: 30px; height: 30px; background: var(--primary); color: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; flex-shrink: 0;
+  }
+  .reg-section-header h5 {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.15rem;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--dark); margin: 0;
+  }
+  .reg-section-body { padding: 28px; }
+
+  .form-label {
+    font-weight: 600; font-size: 0.82rem; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--mid); margin-bottom: 6px;
+  }
+  .form-control, .form-select {
+    border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px;
+    font-size: 0.95rem; color: var(--dark); background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,82,204,0.10); outline: none;
+  }
+  .text-danger.small { font-size: 0.78rem; margin-top: 4px; }
+
+  /* --- Event banner (fixed — no picker) --- */
+  .event-banner {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px; padding: 20px;
+    border: 2px solid var(--primary); background: var(--primary-light); border-radius: 12px;
+  }
+  .event-banner .evt-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.4rem;
+    color: var(--dark); text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .event-banner .evt-sub { font-size: 0.88rem; color: var(--mid); margin-top: 2px; }
+  .event-banner .evt-fee {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.2rem;
+    color: var(--primary); background: #fff; border-radius: 20px; padding: 6px 18px; white-space: nowrap;
+  }
+
+  .email-pref-toggle {
+    display: flex; align-items: center; gap: 14px; padding: 16px 18px;
+    border: 2px solid var(--border); border-radius: 12px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s; background: #fff; user-select: none;
+  }
+  .email-pref-toggle:hover { border-color: var(--primary); background: var(--primary-light); }
+  #receive_confirmation_email { position: absolute; opacity: 0; width: 0; height: 0; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-track { width: 44px; height: 24px; background: #cdd3e0; border-radius: 12px; transition: background 0.2s; position: relative; }
+  .toggle-thumb {
+    position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+    background: #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.18); transition: transform 0.2s;
+  }
+  #receive_confirmation_email:checked ~ label .toggle-track { background: var(--primary); }
+  #receive_confirmation_email:checked ~ label .toggle-thumb { transform: translateX(20px); }
+  #receive_confirmation_email:checked ~ label .email-pref-toggle { border-color: var(--primary); background: var(--primary-light); }
+  #receive_confirmation_email:checked ~ label .pref-status { color: var(--primary); }
+  #receive_confirmation_email:checked ~ label .pref-status-text::before { content: "Yes, send me a confirmation email"; }
+  #receive_confirmation_email:not(:checked) ~ label .pref-status-text::before { content: "No, I don't want a confirmation email"; }
+  #receive_confirmation_email:not(:checked) ~ label .pref-status { color: #999; }
+  .pref-icon { font-size: 1.4rem; line-height: 1; }
+  .pref-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem;
+    letter-spacing: 0.5px; text-transform: uppercase; color: var(--dark);
+  }
+  .pref-status { font-size: 0.82rem; font-weight: 500; margin-top: 2px; transition: color 0.2s; }
+
+  .btn-register {
+    background: linear-gradient(90deg, #0052cc, #0070f3); color: #fff; border: none; border-radius: 10px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase; padding: 16px; width: 100%;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 4px 16px rgba(0,82,204,0.25);
+  }
+  .btn-register:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,82,204,0.30); }
+  .btn-register:active { transform: translateY(0); }
+
+  .alert-info { border-radius: 8px; font-size: 0.9rem; }
+  .back-link {
+    color: var(--mid); text-decoration: none; font-size: 0.9rem;
+    display: inline-flex; align-items: center; gap: 6px; transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--primary); }
+  .flatpickr-input { background: #fff !important; }
+</style>
+
+<!-- Hero -->
+<div class="reg-hero">
+  <h1>Race <span>Entry</span></h1>
+  <p>{{ race.name }} — {{ event.title }}</p>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Fixed event banner — this page is scoped to ONE event only -->
+      <div class="event-banner mb-4">
+        <div>
+          <div class="evt-title">{{ event.title }}</div>
+          <div class="evt-sub">
+            {{ race.name }}
+            {% if race.location %} · {{ race.location }}{% endif %}
+            {% if event.distance_km %} · {{ event.distance_km }} km{% endif %}
+          </div>
+        </div>
+        <div class="evt-fee">₹{{ event.price }}</div>
+      </div>
+
+      <form method="POST" id="regForm" novalidate enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <!-- Section 1: Personal Details -->
+        <div class="reg-card mb-4">
+          <div class="reg-section-header">
+            <div class="step-num">1</div>
+            <h5>Personal Details</h5>
+          </div>
+          <div class="reg-section-body">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Full Name</label>
+                {{ form.name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.name.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Father's Name</label>
+                {{ form.fathers_name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.fathers_name.errors }}</div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-4">
+                <label class="form-label">Date of Birth</label>
+                {{ form.date_of_birth|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.date_of_birth.errors }}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Gender</label>
+                {{ form.gender|add_class:"form-select" }}
+                <div class="text-danger small">{{ form.gender.errors }}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Blood Group</label>
+                <input type="text" name="blood_group" class="form-control" placeholder="e.g. O+">
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="form-label">Email Address</label>
+                {{ form.email|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.email.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Mobile Number</label>
+                {{ form.mobile_number|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.mobile_number.errors }}</div>
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="form-label">School / College / Club</label>
+                {{ form.school_name|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.school_name.errors }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Aadhaar Number</label>
+                {{ form.aadhar_number|add_class:"form-control" }}
+                <div class="text-danger small">{{ form.aadhar_number.errors }}</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section 2: Location -->
+        <div class="reg-card mb-4">
+          <div class="reg-section-header">
+            <div class="step-num">2</div>
+            <h5>Location & Representation</h5>
+          </div>
+          <div class="reg-section-body">
+
+            <div class="mb-3">
+              <label class="form-label">Address</label>
+              {{ form.address|add_class:"form-control"|attr:"rows:2" }}
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">State</label>
+                <select name="state" id="id_state" class="form-select" data-selected-state="{{ form.state.value|default:'' }}">
+                  <option value="">Select State</option>
+                  {% for s in states %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">District</label>
+                <select name="district_fk" id="id_district_fk" class="form-select" data-selected-district="{{ form.district_fk.value|default:'' }}">
+                  <option value="">Select District</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label">Representing From</label>
+              {{ form.representing_from|add_class:"form-control" }}
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section 3: Communication Preferences -->
+        <div class="reg-card mb-4">
+          <div class="reg-section-header">
+            <div class="step-num">3</div>
+            <h5>Communication Preferences</h5>
+          </div>
+          <div class="reg-section-body">
+
+            <input type="checkbox" name="receive_confirmation_email" id="receive_confirmation_email" checked>
+
+            <label for="receive_confirmation_email">
+              <div class="email-pref-toggle">
+                <div class="toggle-switch" aria-hidden="true">
+                  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                </div>
+                <div class="pref-icon">✉️</div>
+                <div class="flex-grow-1">
+                  <div class="pref-title">Confirmation Email</div>
+                  <div class="pref-status"><span class="pref-status-text"></span></div>
+                </div>
+              </div>
+            </label>
+
+            <p class="text-muted small mt-3 mb-0" style="padding-left:2px;">
+              When enabled, a confirmation email with your registration details will be sent to your registered email address after successful registration.
+            </p>
+
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-register">
+          Confirm &amp; Register →
+        </button>
+
+      </form>
+
+      <div class="text-center mt-4">
+        <a href="{% url 'accounts:home' %}" class="back-link">
+          <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="user-meta" data-email="{{ request.user.email|default:'' }}" style="display:none;"></div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ── 1. Auto-fill email from logged-in user ──────────────────────────
+  const emailField = document.querySelector('input[name="email"]');
+  const userEmail  = document.getElementById('user-meta')?.dataset.email;
+  if (emailField && userEmail && !emailField.value) {
+    emailField.value = userEmail;
+  }
+
+  // ── 2. AJAX District Loading ────────────────────────────────────────
+  const stateSelect    = document.getElementById('id_state');
+  const districtSelect = document.getElementById('id_district_fk');
+
+  function loadDistricts(stateId, preselectDistrictId) {
+    districtSelect.innerHTML = '<option value="">Loading…</option>';
+    fetch("{% url 'accounts:ajax_load_districts' %}?state=" + stateId)
+      .then(r => r.json())
+      .then(data => {
+        districtSelect.innerHTML = '<option value="">Select District</option>';
+        data.districts.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = d.name;
+          if (preselectDistrictId == d.id) opt.selected = true;
+          districtSelect.appendChild(opt);
+        });
+      });
+  }
+
+  stateSelect.addEventListener('change', function () {
+    loadDistricts(this.value, null);
+  });
+
+  const preselectedState    = stateSelect.dataset.selectedState;
+  const preselectedDistrict = districtSelect.dataset.selectedDistrict;
+  if (preselectedState) {
+    stateSelect.value = preselectedState;
+    loadDistricts(preselectedState, preselectedDistrict);
+  }
+
+  // ── 3. Date Picker ──────────────────────────────────────────────────
+  flatpickr("#id_date_of_birth", {
+    dateFormat: "Y-m-d",
+    maxDate: "today",
+    altInput: true,
+    altFormat: "F j, Y"
+  });
+
+  // ── 4. Email preference toggle — keep thumb in sync ─────────────────
+  const emailPrefCheckbox = document.getElementById('receive_confirmation_email');
+  const toggleThumb       = document.querySelector('.toggle-thumb');
+  const toggleTrack       = document.querySelector('.toggle-track');
+
+  function syncToggle() {
+    if (emailPrefCheckbox.checked) {
+      toggleThumb.style.transform  = 'translateX(20px)';
+      toggleTrack.style.background = 'var(--primary)';
+    } else {
+      toggleThumb.style.transform  = 'translateX(0)';
+      toggleTrack.style.background = '#cdd3e0';
+    }
+  }
+
+  emailPrefCheckbox.addEventListener('change', syncToggle);
+  syncToggle();
+
+});
+</script>

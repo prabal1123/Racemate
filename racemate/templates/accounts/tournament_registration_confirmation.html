@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournament Entry Confirmed — {{ registration.registration_id }}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f7f6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f6;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1a1a1a 0%,#333 100%);padding:40px 48px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="display:inline-block;background:#ffc107;color:#1a1a1a;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 14px;border-radius:20px;margin-bottom:12px;">
+                      ⏳ &nbsp;Pending Approval
+                    </span>
+                    <h1 style="margin:0 0 4px;color:#fff;font-size:26px;font-weight:700;line-height:1.2;">
+                      Tournament Entry Submitted
+                    </h1>
+                    <p style="margin:0;color:rgba(255,255,255,0.6);font-size:14px;">
+                      Official Entry Confirmation
+                    </p>
+                  </td>
+                  <td align="right" style="vertical-align:top;">
+                    <p style="margin:0 0 4px;color:rgba(255,255,255,0.5);font-size:10px;text-transform:uppercase;letter-spacing:1px;">
+                      Registration ID
+                    </p>
+                    <p style="margin:0;color:#d4af37;font-size:22px;font-weight:700;letter-spacing:2px;">
+                      {{ registration.registration_id }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background:#ffffff;padding:40px 48px;">
+
+              <p style="margin:0 0 32px;color:#555;font-size:15px;line-height:1.6;">
+                Hi <strong style="color:#1a1a1a;">{{ registration.name }}</strong>, your tournament entry submission has been received.
+                It is currently <strong>Pending</strong> and will be reviewed by the organizers shortly.
+              </p>
+
+              <!-- Athlete Info -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                <tr>
+                  <td colspan="2" style="border-bottom:2px solid #f0f0f0;padding-bottom:10px;margin-bottom:20px;">
+                    <h2 style="margin:0;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#1a1a1a;">
+                      Athlete Information
+                    </h2>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 0;border-bottom:1px solid #f5f5f5;width:50%;vertical-align:top;">
+                    <p style="margin:0 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:700;">Full Name</p>
+                    <p style="margin:0;font-size:15px;color:#1a1a1a;font-weight:600;">{{ registration.name }}</p>
+                  </td>
+                  <td style="padding:14px 0;border-bottom:1px solid #f5f5f5;width:50%;vertical-align:top;">
+                    <p style="margin:0 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:700;">Email</p>
+                    <p style="margin:0;font-size:15px;color:#1a1a1a;">{{ registration.email }}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 0;vertical-align:top;">
+                    <p style="margin:0 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:700;">Mobile</p>
+                    <p style="margin:0;font-size:15px;color:#1a1a1a;">{{ registration.mobile_number }}</p>
+                  </td>
+                  <td style="padding:14px 0;vertical-align:top;">
+                    <p style="margin:0 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:700;">Submitted</p>
+                    <p style="margin:0;font-size:15px;color:#1a1a1a;">{{ registration.created_at|date:"F d, Y @ H:i" }}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Tournament Entries -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                <tr>
+                  <td style="border-bottom:2px solid #f0f0f0;padding-bottom:10px;">
+                    <h2 style="margin:0;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#1a1a1a;">
+                      Entries Submitted
+                    </h2>
+                  </td>
+                </tr>
+                {% for entry in registration.tournament_entries.all %}
+                <tr>
+                  <td style="padding:12px 0;border-bottom:1px solid #f5f5f5;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0;font-size:15px;font-weight:600;color:#1a1a1a;">{{ entry.tournament_category.tournament.name }}</p>
+                          <p style="margin:2px 0 0;font-size:12px;color:#999;">{{ entry.tournament_category.category.name }} — {{ entry.tournament_category.entry_format.name }}</p>
+                        </td>
+                        <td align="right">
+                          <span style="display:inline-block;background:#fff3cd;color:#856404;font-size:12px;font-weight:700;padding:4px 14px;border-radius:20px;">
+                            {{ entry.status.name }}
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td style="padding:12px 0;color:#999;font-size:14px;">No entries found.</td></tr>
+                {% endfor %}
+              </table>
+
+              <!-- Registration ID box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                <tr>
+                  <td style="background:#f8f9fa;border:1px dashed #ffc107;border-radius:10px;padding:20px;text-align:center;">
+                    <p style="margin:0 0 6px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:700;">Your Registration ID</p>
+                    <p style="margin:0;font-size:28px;font-weight:700;color:#1a1a1a;letter-spacing:3px;">{{ registration.registration_id }}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td align="center">
+                    <a href="{{ site_url }}{% url 'accounts:view_registration_details' registration.registration_id %}"
+                       style="display:inline-block;background:linear-gradient(90deg,#0052cc,#0070f3);color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:10px;letter-spacing:1px;">
+                      View Full Registration Details →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;font-size:12px;color:#aaa;text-align:center;line-height:1.6;">
+                You'll receive another email once your entry status is updated by the organizers.<br>
+                If you have any questions, reply to this email.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8f9fa;padding:24px 48px;border-top:1px solid #eee;">
+              <p style="margin:0;font-size:12px;color:#aaa;text-align:center;">
+                © Racemate &nbsp;·&nbsp; This is an automated confirmation email.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

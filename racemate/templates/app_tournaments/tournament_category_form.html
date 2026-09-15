@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Edit Category — {{ category }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 700px;">
+    <h2 class="mb-4">Edit — {{ category.tournament.name }} — {{ category.category.name }}</h2>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Category</label>
+                {{ form.category }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Entry Format</label>
+                {{ form.entry_format }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Fixture Type</label>
+                {{ form.fixture_type }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Scoring Rule</label>
+                {{ form.scoring_rule }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Entry Fee</label>
+                {{ form.entry_fee }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Maximum Entries</label>
+                {{ form.maximum_entries }}
+            </div>
+            <div class="col-md-6 d-flex align-items-center gap-3 mt-4">
+                <div class="form-check">
+                    {{ form.registration_open }}
+                    <label class="form-check-label">Registration Open</label>
+                </div>
+                <div class="form-check">
+                    {{ form.is_active }}
+                    <label class="form-check-label">Active</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-dark">Save</button>
+            <a href="{% url 'app_tournaments:tournament_category_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

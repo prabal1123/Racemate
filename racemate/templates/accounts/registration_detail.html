@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{% url 'accounts:profile' %}" class="text-decoration-none text-muted small">
+            ← Back to Profile
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                
+                <div class="p-4 p-md-5 text-white" style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge bg-success mb-2 fw-normal px-3">Confirmed</span>
+                            <h2 class="fw-bold mb-1">{{ registration.race.name }}</h2>
+                            <p class="opacity-75 mb-0">Official Entry Form</p>
+                        </div>
+                        <div class="text-end">
+                            <p class="small opacity-50 mb-0 text-uppercase">Registration ID</p>
+                            <h4 class="fw-bold" style="color: #d4af37;">{{ registration.registration_id }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5 bg-white">
+                    
+                    <div class="mb-5">
+                        <h5 class="fw-bold border-bottom pb-2 mb-4" style="color: #1a1a1a;">Athlete Information</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-bold">Full Name</label>
+                                <p class="fs-5 text-dark">{{ registration.name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-bold">Category</label>
+                                <p class="fs-5 text-dark">{{ registration.category|default:"General" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-bold">Email Address</label>
+                                <p class="text-dark">{{ registration.email }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-bold">Mobile Number</label>
+                                <p class="text-dark">{{ registration.mobile_number }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-5">
+                        <h5 class="fw-bold border-bottom pb-2 mb-4" style="color: #1a1a1a;">Additional Details</h5>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-bold">Date of Birth</label>
+                                <p class="text-dark">{{ registration.date_of_birth|date:"d M Y" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-bold">Gender</label>
+                                <p class="text-dark text-capitalize">{{ registration.gender }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-bold">District & State</label>
+                                <p class="text-dark">{{ registration.district_fk.name }}, {{ registration.state.name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small text-uppercase fw-bold">Aadhaar (Partial)</label>
+                                <p class="text-dark">XXXX-XXXX-{{ registration.aadhar_number|slice:"-4:" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-3 p-3 bg-light text-center">
+                        <p class="small text-muted mb-0">
+                            Registered on {{ registration.created_at|date:"F d, Y @ H:i" }}<br>
+                            Please carry a digital or printed copy of this page for race-day check-in.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="card-footer bg-light border-0 p-4 d-flex justify-content-between align-items-center">
+                    <button onclick="window.print()" class="btn btn-outline-dark btn-sm rounded-pill px-4">
+                        Print Entry
+                    </button>
+                    <div>
+                        {% if registration.bib_id %}
+                            <span class="small text-muted me-2">Bib Assigned:</span>
+                            <span class="fw-bold">{{ registration.bib_id }}</span>
+                        {% else %}
+                            <span class="small text-muted italic">Bib allocation in progress...</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Aesthetic touch for print */
+    @media print {
+        .btn, .text-muted.small { display: none !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        .container { width: 100% !important; max-width: 100% !important; }
+    }
+    
+    body {
+        background-color: #f4f7f6;
+    }
+</style>
+{% endblock %}

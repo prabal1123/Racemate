@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+  <div class="card shadow-lg border-0 rounded-4 text-center p-5" style="max-width: 600px; width: 100%;">
+
+    <div class="mb-4">
+      <div class="rounded-circle bg-success d-inline-flex justify-content-center align-items-center"
+           style="width: 90px; height: 90px;">
+        <span style="font-size: 40px; color: white;">✓</span>
+      </div>
+    </div>
+
+    <h2 class="fw-bold text-success mb-2">
+      Registration Successful!
+    </h2>
+
+    {% if registration.registration_type == 'tournament' %}
+
+      <p class="text-muted mb-4">
+        Your tournament entries have been submitted.
+      </p>
+
+      <div class="p-3 mb-4 rounded-3 text-start" style="background-color: #f8f9fa; border: 1px dashed #28a745;">
+        <p class="small text-uppercase text-muted mb-2 fw-bold text-center">Entries Submitted</p>
+        {% for entry in registration.tournament_entries.all %}
+          <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+            <div>
+              <div class="fw-bold text-dark">{{ entry.tournament_category.tournament.name }}</div>
+              <div class="small text-muted">{{ entry.tournament_category.category.name }} — {{ entry.tournament_category.entry_format.name }}</div>
+            </div>
+            <span class="badge bg-warning text-dark">{{ entry.status.name }}</span>
+          </div>
+        {% empty %}
+          <p class="text-muted small mb-0">No entries found.</p>
+        {% endfor %}
+      </div>
+
+      <p class="text-muted small mb-4">
+        All entries are <strong>Pending</strong> until reviewed and approved by the tournament organizers.
+      </p>
+
+    {% else %}
+
+      <p class="text-muted mb-4">
+        You are now registered for <br>
+        <span class="fw-bold text-dark">{{ registration.race.name }}</span>
+      </p>
+
+    {% endif %}
+
+    <div class="p-3 mb-4 rounded-3" style="background-color: #f8f9fa; border: 1px dashed #28a745;">
+      <p class="small text-uppercase text-muted mb-1 fw-bold">Your Registration ID</p>
+      <h2 class="fw-bold text-dark mb-0" style="letter-spacing: 2px;">
+        {{ registration.registration_id }}
+      </h2>
+    </div>
+
+    <div class="mb-4">
+        <a href="{% url 'accounts:view_registration_details' registration.registration_id %}" 
+           class="text-decoration-none fw-bold text-primary">
+           <i class="bi bi-eye"></i> View my submitted form details
+        </a>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-grid gap-2">
+      <a href="{% url 'accounts:home' %}" class="btn btn-primary btn-lg rounded-3">
+        Go to Home
+      </a>
+
+      <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary rounded-3">
+        Register Another Participant
+      </a>
+    </div>
+
+    <p class="mt-4 small text-muted">
+        A confirmation email will be sent to <strong>{{ registration.email }}</strong>
+    </p>
+
+  </div>
+</div>
+{% endblock %} 

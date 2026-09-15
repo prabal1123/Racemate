@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Matches{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Matches</h2>
+    </div>
+
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-auto">
+            <select name="category" class="form-select" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                <option value="{{ c.pk }}" {% if selected_category == c.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ c.tournament.name }} — {{ c.category.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                {% for s in statuses %}
+                <option value="{{ s.pk }}" {% if selected_status == s.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ s.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Category</th>
+                    <th>Round</th>
+                    <th>Entry One</th>
+                    <th>Entry Two</th>
+                    <th>Court</th>
+                    <th>Status</th>
+                    <th>Winner</th>
+                    <th>Scheduled</th>
+                    <th style="width:60px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in matches %}
+                <tr>
+                    <td>{{ match.match_number }}</td>
+                    <td>
+                        {{ match.tournament_round.tournament_category.tournament.name }} —
+                        {{ match.tournament_round.tournament_category.category.name }}
+                    </td>
+                    <td>{{ match.tournament_round.name }}</td>
+                    <td>{{ match.entry_one|default:"TBD" }}</td>
+                    <td>{{ match.entry_two|default:"TBD" }}</td>
+                    <td>{{ match.court|default:"—" }}</td>
+                    <td>
+                        {% if match.winner %}
+                            <span class="badge bg-success">Completed</span>
+                        {% elif match.entry_one and match.entry_two %}
+                            <span class="badge bg-warning text-dark">{{ match.status|default:"Pending" }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Awaiting Participants</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if match.winner %}
+                            <span class="text-success fw-bold">{{ match.winner }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if match.scheduled_at %}
+                            {{ match.scheduled_at|date:"M d, H:i" }} – {{ match.scheduled_end|date:"H:i" }}
+                        {% else %}
+                            <span class="text-muted">Not scheduled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                {% if match.entry_one and match.entry_two %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'app_tournaments:score_match' match.pk %}">
+                                        {% if match.winner %}View / Edit Score{% else %}Enter Score{% endif %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'app_tournaments:fixture_dashboard' match.tournament_round.tournament_category_id %}">
+                                        Fixture Dashboard
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" class="text-center text-muted">No matches found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

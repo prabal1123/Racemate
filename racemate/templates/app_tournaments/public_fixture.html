@@ -1,0 +1,242 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tournament_category }} — Fixtures</title>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont,
+                "Segoe UI", Roboto, sans-serif;
+            background: #f5f6f8;
+            color: #1c1c1e;
+            margin: 0;
+            padding: 24px 16px 60px;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .round-card {
+            margin-bottom: 22px;
+            border: 1px solid #e2e4e8;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .round-heading {
+            padding: 14px 18px;
+            background: #f0f1f4;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .match-list {
+            display: grid;
+            gap: 10px;
+            padding: 16px;
+        }
+
+        .match-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #e2e4e8;
+            flex-wrap: wrap;
+        }
+
+        .match-box.side-top {
+            border-left: 4px solid #2563eb;
+        }
+
+        .match-box.side-bottom {
+            border-left: 4px solid #dc2626;
+        }
+
+        .match-participants {
+            font-weight: 500;
+        }
+
+        .match-participants .winner {
+            color: #15803d;
+            font-weight: 700;
+        }
+
+        .match-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .status-pill {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-in_progress {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .status-scheduled,
+        .status-pending {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .score-btn {
+            padding: 5px 12px;
+            border-radius: 6px;
+            background: #1c1c1e;
+            color: #fff;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        @media (max-width: 600px) {
+            .match-box {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+
+        <h1>{{ tournament_category }}</h1>
+
+        <p class="subtitle">
+            {{ tournament_category.get_fixture_type_display }}
+            &middot;
+            {{ tournament_category.scoring_rule|default:"" }}
+        </p>
+
+        {% if rounds %}
+
+            {% for tournament_round in rounds %}
+
+                <div class="round-card">
+
+                    <div class="round-heading">
+                        {{ tournament_round.name }}
+                    </div>
+
+                    <div class="match-list">
+
+                        {% for match in tournament_round.matches.all %}
+
+                            <div class="match-box side-{{ match.bracket_side|default:'none' }}">
+
+                                <div class="match-participants">
+
+                                    {% if match.entry_one %}
+                                        <span class="{% if match.winner_id == match.entry_one_id %}winner{% endif %}">
+                                            {{ match.entry_one }}
+                                        </span>
+                                    {% else %}
+                                        TBD
+                                    {% endif %}
+
+                                    vs
+
+                                    {% if match.entry_two %}
+                                        <span class="{% if match.winner_id == match.entry_two_id %}winner{% endif %}">
+                                            {{ match.entry_two }}
+                                        </span>
+                                    {% else %}
+                                        TBD
+                                    {% endif %}
+
+                                </div>
+
+                                <div class="match-meta">
+
+                                    {% if match.winner %}
+                                        <span class="status-pill status-completed">
+                                            Completed
+                                        </span>
+                                    {% elif match.entry_one and match.entry_two %}
+                                        <span class="status-pill status-scheduled">
+                                            {{ match.status|default:"Scheduled" }}
+                                        </span>
+                                    {% else %}
+                                        <span class="status-pill status-pending">
+                                            Pending
+                                        </span>
+                                    {% endif %}
+
+                                    {% if is_staff_viewer and match.entry_one and match.entry_two %}
+                                        <a
+                                            class="score-btn"
+                                            href="{% url 'app_tournaments:score_match' match.pk %}"
+                                        >
+                                            {% if match.winner %}
+                                                Edit Score
+                                            {% else %}
+                                                Enter Score
+                                            {% endif %}
+                                        </a>
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        {% empty %}
+
+                            <p>No matches in this round.</p>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="empty-state">
+                Fixtures have not been generated yet.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

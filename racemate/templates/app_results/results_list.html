@@ -1,87 +1,146 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Results / Participation{% endblock %}
-
-{% block extra_css %}
-<link href="{% static 'css/base.css' %}" rel="stylesheet">
-<style>
-  table { width:100%; border-collapse:collapse; }
-  th, td { padding:10px; border-bottom:1px solid #eee; text-align:left; }
-  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
-  .modal.open { display:flex; }
-  .panel { background:#fff; padding:16px; border-radius:8px; width:480px; max-width:95%; }
-</style>
-{% endblock %}
+{% block title %}Racemate — Results List{% endblock %}
 
 {% block content %}
-  <h1>Results / Participation</h1>
+<div class="results-container py-5 bg-light">
+    <div class="container">
+        
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">Race Leaderboard</h2>
+                <p class="text-muted mb-0">Official timings and categorized standings.</p>
+            </div>
+            <div class="actions">
+                <button onclick="window.print()" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                    <i class="bi bi-printer me-1"></i> Print Results
+                </button>
+            </div>
+        </div>
 
-  <!-- pass the url template for the update view to JS using a data-attribute -->
-  <div id="page" data-update-url-template="{% url 'app_results:update' 0 %}">
-    <table>
-      <thead>
-        <tr>
-          <th>Rider</th>
-          <th>Bib</th>
-          <th>Age group</th>
-          <th>Gender</th>
-          <th>Total Lap Time</th>
-          <th>End Time</th>
-          <th>Participated</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for entry in entries %}
-        <tr data-start-id="{{ entry.pk }}">
-          <td>{{ entry.name }}</td>
-          <td>{{ entry.bib_id }}</td>
-          <td class="age_group_cell">{% if entry.participation %}{{ entry.participation.age_group }}{% endif %}</td>
-          <td class="gender_cell">{% if entry.participation %}{{ entry.participation.gender }}{% else %}{{ entry.gender }}{% endif %}</td>
-          <td class="lap_time_cell">
-            {% if entry.total_lap_time %}
-              {{ entry.total_lap_time }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-          <td class="end_time_cell">{% if entry.participation %}{{ entry.participation.end_time }}{% endif %}</td>
-          <td>
-            <input class="is-participated-checkbox" type="checkbox" {% if entry.participation and entry.participation.is_participated %}checked{% endif %} />
-          </td>
-          <td><button class="edit-btn">Edit</button></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th class="ps-4 py-3">Rank</th>
+                            <th>Athlete / Bib</th>
+                            <th>Category</th>
+                            <th>Gender</th>
+                            <th>Total Lap Time</th>
+                            <th class="pe-4 text-end">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        {% for entry in entries %}
+                        <tr>
+                            <td class="ps-4">
+                                {% if forloop.counter == 1 %}
+                                    <div class="rank-badge gold">1</div>
+                                {% elif forloop.counter == 2 %}
+                                    <div class="rank-badge silver">2</div>
+                                {% elif forloop.counter == 3 %}
+                                    <div class="rank-badge bronze">3</div>
+                                {% else %}
+                                    <span class="ms-2 fw-semibold text-muted">{{ forloop.counter }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="rider-info">
+                                        <span class="fw-bold d-block text-dark">{{ entry.name }}</span>
+                                        <span class="badge bg-light text-primary border border-primary-subtle" style="font-size: 0.7rem;">
+                                            BIB: {{ entry.bib_id|default:"N/A" }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-uppercase small fw-bold text-secondary">
+                                    {{ entry.category_display }}
+                                </span>
+                            </td>
+                            <td>{{ entry.gender_display|title }}</td>
+                            <td>
+                                <span class="font-monospace fw-bold text-dark fs-5">
+                                    {{ entry.total_lap_time_display|default:"--:--:--" }}
+                                </span>
+                            </td>
+                            <td class="pe-4 text-end">
+                                {% if entry.total_lap_time_display %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3">Finished</span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3">In Progress</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-person-exclamation display-4 mb-3 d-block"></i>
+                                    <p>No participants registered or no timing data available yet.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    <!-- Modal -->
-    <div id="editModal" class="modal" aria-hidden="true">
-      <div class="panel">
-        <h3>Edit Participation</h3>
-        <form id="participationForm">
-          <input type="hidden" id="startEntryId">
-          <label>Age group<br><input id="f_age_group"></label><br>
-          <label>Gender<br>
-            <select id="f_gender">
-              <option value=""></option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
-            </select>
-          </label><br>
-          <label>Total lap time (seconds)<br><input id="f_total_lap_time_seconds" type="number" /></label><br>
-          <label>End time (ISO)<br><input id="f_end_time" placeholder="YYYY-MM-DDThh:mm:ss" /></label><br><br>
-          <button type="submit">Save</button>
-          <button type="button" id="modalClose">Cancel</button>
-        </form>
-      </div>
+        <div class="mt-4 text-center">
+            <p class="small text-muted">Generated on {% now "F j, Y, g:i a" %} • Racemate Timing System</p>
+        </div>
     </div>
-  </div>
-{% endblock %}
+</div>
 
-{% block extra_js %}
-  <!-- external JS file -->
-  <script src="{% static 'js/participation.js' %}"></script>
+<style>
+    /* Aesthetic UI Tweaks */
+    .results-container {
+        min-height: 90vh;
+    }
+    
+    .table thead th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        border: none;
+    }
+
+    .table tbody td {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        border-color: #f1f3f5;
+    }
+
+    /* Rank Circle Badges */
+    .rank-badge {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 800;
+        font-size: 0.85rem;
+        color: white;
+    }
+    
+    .gold { background: linear-gradient(45deg, #ffd700, #ffae00); box-shadow: 0 2px 5px rgba(255, 174, 0, 0.4); }
+    .silver { background: linear-gradient(45deg, #c0c0c0, #8e8e8e); box-shadow: 0 2px 5px rgba(142, 142, 142, 0.4); }
+    .bronze { background: linear-gradient(45deg, #cd7f32, #a0522d); box-shadow: 0 2px 5px rgba(160, 82, 45, 0.4); }
+
+    .font-monospace {
+        letter-spacing: -0.5px;
+    }
+
+    @media print {
+        .btn, .hero, footer { display: none !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        .bg-primary { background-color: #000 !important; }
+    }
+</style>
 {% endblock %}

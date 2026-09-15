@@ -10,6 +10,7 @@
 
 from django.urls import path
 from . import shell, views
+from .api_views import AdminDashboardAnalyticsAPI
 
 # app_name = 'app_admin'
 
@@ -25,4 +26,9 @@ urlpatterns = [
     path('registrations/', views.registration_list, name='registration_list'),
     path('registrations/edit/<int:pk>/', views.registration_edit, name='registration_edit'),
     path('registrations/delete/<int:pk>/', views.registration_delete, name='registration_delete'),
+    
+
+    path('api/analytics/summary/', AdminDashboardAnalyticsAPI.as_view(), name='admin_api_summary'),
+    
+
 ]

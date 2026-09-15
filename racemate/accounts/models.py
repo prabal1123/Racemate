@@ -1,4 +1,321 @@
 
+# from django.db import models
+# from django.utils.translation import gettext_lazy as _
+# from django.core.validators import RegexValidator
+# from django.core.exceptions import ValidationError
+# from app_admin.models import DimState, DimDistrict
+
+# from datetime import date
+# from django.conf import settings
+
+# # new imports for bib generation
+# from django.db import transaction
+# from django.db.models import F
+# from django.utils import timezone
+# from django.core.mail import send_mail
+# from django.utils.text import slugify
+# from django.db import IntegrityError
+
+# import random
+# from django.utils import timezone
+
+# from django.db import models
+# from django.contrib.auth.models import User
+
+# from django.db import models, transaction
+# from django.utils.translation import gettext_lazy as _
+# from django.core.validators import RegexValidator
+# from django.utils import timezone
+# from django.utils.text import slugify
+# from datetime import date
+
+# # Import location models directly to avoid loading errors
+# from app_admin.models import DimState, DimDistrict
+
+
+# phone_validator = RegexValidator(
+#     regex=r'^\+?\d{7,15}$',
+#     message=_("Enter a valid phone number (7-15 digits, optional leading +).")
+# )
+
+# aadhar_validator = RegexValidator(
+#     regex=r'^\d{12}$',
+#     message=_("Aadhaar must be exactly 12 digits.")
+# )
+
+
+# class RegistrationSequence(models.Model):
+#     """
+#     Keeps per-(district,year,age_category,gender) sequence to safely generate bib numbers.
+#     (Kept for backward compatibility / other uses; not used for global seq)
+#     """
+#     district = models.ForeignKey(DimDistrict, on_delete=models.CASCADE)
+#     year = models.PositiveIntegerField()
+#     age_category = models.CharField(max_length=32)   # short category like 'U18','U23','SEN'
+#     gender = models.CharField(max_length=10)         # 'male','female','other'
+#     seq = models.PositiveIntegerField(default=0)
+
+#     class Meta:
+#         unique_together = ('district', 'year', 'age_category', 'gender')
+#         indexes = [
+#             models.Index(fields=['district', 'year', 'age_category', 'gender'], name='seq_idx'),
+#         ]
+
+#     def __str__(self):
+#         return f"{self.district_id}-{self.year}-{self.age_category}-{self.gender}:{self.seq}"
+
+
+# class GlobalSequence(models.Model):
+#     """
+#     A simple global counter used for trailing bib number (0001,0002,...).
+#     """
+#     name = models.CharField(max_length=100, unique=True)  # use 'registration' as name
+#     seq = models.PositiveIntegerField(default=0)
+
+#     def __str__(self):
+#         return f"{self.name}:{self.seq}"
+
+
+
+
+# # --- Validators ---
+# phone_validator = RegexValidator(
+#     regex=r'^\+?\d{7,15}$',
+#     message=_("Enter a valid phone number (7-15 digits, optional leading +).")
+# )
+
+# aadhar_validator = RegexValidator(
+#     regex=r'^\d{12}$',
+#     message=_("Aadhaar must be exactly 12 digits.")
+# )
+
+# # --- Sequence Models ---
+
+# class GlobalSequence(models.Model):
+#     """
+#     A simple global counter used for IDs and Bib numbers.
+#     """
+#     name = models.CharField(max_length=100, unique=True)
+#     seq = models.PositiveIntegerField(default=0)
+
+#     def __str__(self):
+#         return f"{self.name}:{self.seq}"
+
+
+# # --- Main Registration Model ---
+
+# class Registration(models.Model):
+
+#     GENDER_CHOICES = [
+#         ('male', 'Male'),
+#         ('female', 'Female'),
+#         ('other', 'Other'),
+#     ]
+
+#     # --- Core Relationship ---
+#     race = models.ForeignKey(
+#         "app_races.Race",
+#         on_delete=models.PROTECT,
+#         related_name="account_registrations",
+#         null=True, 
+#         blank=True,
+#         verbose_name=_("Selected Race")
+#     )
+
+#     # Simple field to store heat as a number (Replaces old Heat Model)
+#     heat_number = models.IntegerField(
+#         _("Heat Number"),
+#         null=True,
+#         blank=True,
+#         help_text=_("The group/wave number assigned based on DOB.")
+#     )
+
+#     # --- Personal Details ---
+#     name = models.CharField(_("Full name"), max_length=200)
+#     fathers_name = models.CharField(_("Father's name"), max_length=200, blank=True)
+#     date_of_birth = models.DateField(_("Date of birth"), null=True, blank=True)
+#     gender = models.CharField(_("Gender"), max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+#     school_name = models.CharField(_("School / College / Club"), max_length=200, blank=True)
+#     address = models.TextField(_("Address"), blank=True)
+
+#     # --- Location Logic ---
+#     state = models.ForeignKey(
+#         DimState, 
+#         on_delete=models.PROTECT, 
+#         null=True, 
+#         blank=True, 
+#         related_name="registrations"
+#     )
+#     district_fk = models.ForeignKey(
+#         DimDistrict, 
+#         on_delete=models.PROTECT, 
+#         null=True, 
+#         blank=True, 
+#         related_name="registrations_fk"
+#     )
+#     representing_from = models.CharField(_("Representing from"), max_length=200, blank=True)
+
+#     # --- Contact & Identity ---
+#     mobile_number = models.CharField(
+#         _("Mobile number"), 
+#         max_length=20, 
+#         blank=True, 
+#         validators=[phone_validator]
+#     )
+#     aadhar_number = models.CharField(
+#         _("Aadhaar"), 
+#         max_length=12, 
+#         blank=True, 
+#         validators=[aadhar_validator]
+#     )
+#     email = models.EmailField(_("Email"), max_length=254, blank=True, null=True)
+
+#     # --- Metadata & ID Generation ---
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     category = models.CharField(_("Assigned category"), max_length=255, null=True, blank=True)
+    
+#     registration_id = models.CharField(
+#         _("Registration ID"), 
+#         max_length=50, 
+#         unique=True, 
+#         null=True, 
+#         blank=True, 
+#         editable=False
+#     )
+    
+#     bib_id = models.CharField(_("Bib ID"), max_length=50, unique=True, null=True, blank=True)
+#     bib_released_at = models.DateTimeField(null=True, blank=True)
+
+#     class Meta:
+#         ordering = ['-created_at']
+#         verbose_name = _("Registration")
+#         verbose_name_plural = _("Registrations")
+#         indexes = [
+#             models.Index(fields=['mobile_number'], name='reg_mobile_idx'),
+#             models.Index(fields=['aadhar_number'], name='reg_aadhar_idx'),
+#         ]
+
+#     def __str__(self):
+#         return f"{self.name} — {self.registration_id or 'No ID'}"
+
+#     # --- Logic ---
+
+#     def age_on(self, on_date=None):
+#         if not self.date_of_birth: 
+#             return None
+#         if on_date is None: 
+#             on_date = date.today()
+#         years = on_date.year - self.date_of_birth.year
+#         if (on_date.month, on_date.day) < (self.date_of_birth.month, self.date_of_birth.day):
+#             years -= 1
+#         return years
+    
+#     def get_race_initials(self):
+#         if self.race and self.race.name:
+#             words = self.race.name.split()
+#             return "".join([word[0].upper() for word in words if word])[:4]
+#         return "REG"
+
+#     def assign_category(self, event_date=None):
+#         if event_date is None:
+#             if self.race and self.race.race_start:
+#                 event_date = self.race.race_start.date()
+#             else:
+#                 event_date = date.today()
+        
+#         age = self.age_on(event_date)
+#         if age is None: return "Unspecified"
+        
+#         if age >= 56: return "Masters Men 56+"
+#         if 46 <= age <= 55: return "Masters Men 46 to 55 years"
+#         if 36 <= age <= 45: return "Masters Men 36 to 45 years"
+#         if 19 <= age <= 22: return "Men under-23 (19-22)"
+#         if age >= 19: return "Men Elite & Women Elite (19 & above)"
+#         return "Junior Categories"
+
+#     def save(self, *args, **kwargs):
+#         # 1. Category Auto-Assignment
+#         if not self.category:
+#             try:
+#                 self.category = self.assign_category()
+#             except:
+#                 pass
+
+#         # 2. Registration ID Generation (e.g., CTCC-0001)
+#         if not self.registration_id:
+#             prefix = self.get_race_initials()
+#             with transaction.atomic():
+#                 seq_row, _ = GlobalSequence.objects.select_for_update().get_or_create(
+#                     name=f"reg_seq_{prefix}",
+#                     defaults={'seq': 0}
+#                 )
+#                 seq_row.seq += 1
+#                 seq_row.save()
+#                 self.registration_id = f"{prefix}-{seq_row.seq:04d}"
+
+#         super().save(*args, **kwargs)
+
+#     def release_bib(self):
+#         """
+#         Generates the District-based Bib ID.
+#         """
+#         if self.bib_id:
+#             return self.bib_id
+
+#         prefix = self.get_race_initials()
+        
+#         dist_code = self.district_fk.code.upper() if (self.district_fk and self.district_fk.code) else "UNK"
+#         gender = (self.gender or "O")[0].upper()
+#         year = self.race.race_start.year if (self.race and self.race.race_start) else date.today().year
+
+#         with transaction.atomic():
+#             seq_key = f"bib_seq_{prefix}_{dist_code}"
+#             seq_row, _ = GlobalSequence.objects.select_for_update().get_or_create(
+#                 name=seq_key,
+#                 defaults={'seq': 0}
+#             )
+#             seq_row.seq += 1
+#             seq_row.save()
+            
+#             self.bib_id = f"{prefix}-{dist_code}-{gender}-{year}-{seq_row.seq:04d}"
+#             self.bib_released_at = timezone.now()
+#             self.save()
+            
+#         return self.bib_id
+
+
+# class EmailOTP(models.Model):
+#     email = models.EmailField()
+
+#     code = models.CharField(max_length=6)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     def is_valid(self):
+#         return (timezone.now() - self.created_at).seconds < 300  # 5 min
+
+
+
+# class Profile(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE)
+#     phone_number = models.CharField(max_length=15, blank=True)
+#     bio = models.TextField(max_length=500, blank=True)
+#     profile_image = models.ImageField(upload_to='profile_pics/', default='default.jpg', blank=True)
+#     dob = models.DateField(null=True, blank=True)
+#     blood_group = models.CharField(max_length=5, blank=True)
+    
+#     # Identity & Address for "View More" section
+#     pan_number = models.CharField(max_length=10, blank=True)
+#     aadhaar_number = models.CharField(max_length=12, blank=True)
+#     address_line_1 = models.CharField(max_length=255, blank=True)
+#     city = models.CharField(max_length=100, blank=True)
+#     state = models.CharField(max_length=100, blank=True)
+#     zip_code = models.CharField(max_length=6, blank=True)
+
+#     def __str__(self):
+#         return f"{self.user.username}'s Profile"
+    
+
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
@@ -15,6 +332,23 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.utils.text import slugify
 from django.db import IntegrityError
+
+import random
+from django.utils import timezone
+
+from django.db import models
+from django.contrib.auth.models import User
+
+from django.db import models, transaction
+from django.utils.translation import gettext_lazy as _
+from django.core.validators import RegexValidator
+from django.utils import timezone
+from django.utils.text import slugify
+from datetime import date
+
+# Import location models directly to avoid loading errors
+from app_admin.models import DimState, DimDistrict
+
 
 phone_validator = RegexValidator(
     regex=r'^\+?\d{7,15}$',
@@ -48,106 +382,126 @@ class RegistrationSequence(models.Model):
         return f"{self.district_id}-{self.year}-{self.age_category}-{self.gender}:{self.seq}"
 
 
+
+
+# --- Validators ---
+phone_validator = RegexValidator(
+    regex=r'^\+?\d{7,15}$',
+    message=_("Enter a valid phone number (7-15 digits, optional leading +).")
+)
+
+aadhar_validator = RegexValidator(
+    regex=r'^\d{12}$',
+    message=_("Aadhaar must be exactly 12 digits.")
+)
+
+# --- Sequence Models ---
+
 class GlobalSequence(models.Model):
     """
-    A simple global counter used for trailing bib number (0001,0002,...).
+    A simple global counter used for IDs and Bib numbers.
     """
-    name = models.CharField(max_length=100, unique=True)  # use 'registration' as name
+    name = models.CharField(max_length=100, unique=True)
     seq = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f"{self.name}:{self.seq}"
 
 
+# --- Main Registration Model ---
+
 class Registration(models.Model):
-    PROFESSION_CHOICES = [
-        ('student', 'Student'),
-        ('employee', 'Employee'),
-        ('business', 'Business'),
-    ]
 
-    name = models.CharField(_("Full name"), max_length=200)
-    fathers_name = models.CharField(_("Father's name"), max_length=200, blank=True)
-    date_of_birth = models.DateField(_("Date of birth"), null=True, blank=True)
-    profession = models.CharField(_("Profession"), max_length=20, choices=PROFESSION_CHOICES, blank=True)
-    address = models.TextField(_("Address"), blank=True)
-
-    # Legacy free-text district (kept for migration/backwards compatibility)
-    district = models.CharField(
-        _("District (legacy)"),
-        max_length=200,
-        blank=True,
-        help_text=_("Legacy/free-text district field; used for migration.")
-    )
     GENDER_CHOICES = [
         ('male', 'Male'),
         ('female', 'Female'),
         ('other', 'Other'),
     ]
 
-    gender = models.CharField(
-        _("Gender"),
-        max_length=10,
-        choices=GENDER_CHOICES,
-        blank=True,
-        null=True,
+    REGISTRATION_TYPE_CHOICES = [
+        ('race', 'Race'),
+        ('tournament', 'Tournament'),
+    ]
+
+    # --- NEW: distinguishes cycling registrations from racket-sport tournament entries ---
+    registration_type = models.CharField(
+        _("Registration type"),
+        max_length=20,
+        choices=REGISTRATION_TYPE_CHOICES,
+        default='race',
     )
 
-    # Foreign Keys
-    state = models.ForeignKey(
-        DimState,
+    # --- Core Relationship ---
+    race = models.ForeignKey(
+        "app_races.Race",
         on_delete=models.PROTECT,
+        related_name="account_registrations",
+        null=True, 
+        blank=True,
+        verbose_name=_("Selected Race")
+    )
+
+    # Simple field to store heat as a number (Replaces old Heat Model)
+    heat_number = models.IntegerField(
+        _("Heat Number"),
         null=True,
         blank=True,
-        related_name="registrations",
-        verbose_name=_("State"),
-        help_text=_("Selected state (FK to DimState).")
+        help_text=_("The group/wave number assigned based on DOB.")
+    )
+
+    # --- Personal Details ---
+    name = models.CharField(_("Full name"), max_length=200)
+    fathers_name = models.CharField(_("Father's name"), max_length=200, blank=True)
+    date_of_birth = models.DateField(_("Date of birth"), null=True, blank=True)
+    gender = models.CharField(_("Gender"), max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+    school_name = models.CharField(_("School / College / Club"), max_length=200, blank=True)
+    address = models.TextField(_("Address"), blank=True)
+
+    # --- Location Logic ---
+    state = models.ForeignKey(
+        DimState, 
+        on_delete=models.PROTECT, 
+        null=True, 
+        blank=True, 
+        related_name="registrations"
     )
     district_fk = models.ForeignKey(
-        DimDistrict,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="registrations_fk",
-        verbose_name=_("District"),
-        help_text=_("Selected district (FK to DimDistrict).")
+        DimDistrict, 
+        on_delete=models.PROTECT, 
+        null=True, 
+        blank=True, 
+        related_name="registrations_fk"
     )
-
     representing_from = models.CharField(_("Representing from"), max_length=200, blank=True)
+
+    # --- Contact & Identity ---
     mobile_number = models.CharField(
-        _("Mobile number"),
-        max_length=20,
-        blank=True,
-        validators=[phone_validator],
-        help_text=_("Include country code if applicable, e.g. +91XXXXXXXXXX")
+        _("Mobile number"), 
+        max_length=20, 
+        blank=True, 
+        validators=[phone_validator]
     )
     aadhar_number = models.CharField(
-        _("Aadhaar"),
-        max_length=12,
-        blank=True,
-        validators=[aadhar_validator],
-        help_text=_("12 digit Aadhaar number without spaces.")
+        _("Aadhaar"), 
+        max_length=12, 
+        blank=True, 
+        validators=[aadhar_validator]
     )
-
-    # Email (added because code references it)
     email = models.EmailField(_("Email"), max_length=254, blank=True, null=True)
 
-    # Many-to-Many relation to Event model
-    events = models.ManyToManyField(
-        "app_admin.DimEventCategory",
-        blank=True,
-        related_name="registrations",
-        verbose_name=_("Events"),
-        help_text=_("Events the registrant is participating in.")
-    )
-
+    # --- Metadata & ID Generation ---
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # store computed category (nullable so migration is easy)
-    category = models.CharField(_("Assigned category"), max_length=255, null=True, blank=True,
-                                help_text=_("Computed competition category for registrant (auto-calculated)."))
-
-    # --- NEW fields for Bibs ---
+    category = models.CharField(_("Assigned category"), max_length=255, null=True, blank=True)
+    
+    registration_id = models.CharField(
+        _("Registration ID"), 
+        max_length=50, 
+        unique=True, 
+        null=True, 
+        blank=True, 
+        editable=False
+    )
+    
     bib_id = models.CharField(_("Bib ID"), max_length=50, unique=True, null=True, blank=True)
     bib_released_at = models.DateTimeField(null=True, blank=True)
 
@@ -161,195 +515,124 @@ class Registration(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.name} — {self.mobile_number or 'no-phone'}"
+        return f"{self.name} — {self.registration_id or 'No ID'}"
 
-    def clean(self):
-        # Ensure aadhar is exactly 12 digits if provided
-        if self.aadhar_number:
-            if not self.aadhar_number.isdigit() or len(self.aadhar_number) != 12:
-                raise ValidationError({'aadhar_number': _("Aadhaar must be 12 digits.")})
+    # --- Logic ---
 
-        # State / District consistency
-        if self.state and self.district_fk:
-            if self.district_fk.state_id != self.state.id:
-                raise ValidationError(_("Selected district does not belong to selected state."))
-
-        # Optional: auto-set state from district if state missing but district provided
-        if not self.state and self.district_fk:
-            self.state = self.district_fk.state
-
-    # -------------------
-    # Age / category helpers
-    # -------------------
     def age_on(self, on_date=None):
-        """
-        Compute integer age in years on `on_date` (defaults to today).
-        Returns None if date_of_birth not set.
-        """
-        if not self.date_of_birth:
+        if not self.date_of_birth: 
             return None
-        if on_date is None:
+        if on_date is None: 
             on_date = date.today()
         years = on_date.year - self.date_of_birth.year
         if (on_date.month, on_date.day) < (self.date_of_birth.month, self.date_of_birth.day):
             years -= 1
         return years
-
-    def birth_year(self):
-        return self.date_of_birth.year if self.date_of_birth else None
+    
+    def get_race_initials(self):
+        if self.race and self.race.name:
+            words = self.race.name.split()
+            return "".join([word[0].upper() for word in words if word])[:4]
+        return "REG"
 
     def assign_category(self, event_date=None):
-        """
-        Decide a category string based on age (on event date).
-        Adjust the ranges to match your official rulebook.
-        """
         if event_date is None:
-            event_date = getattr(settings, "EVENT_DATE", date.today())
-
+            if self.race and self.race.race_start:
+                event_date = self.race.race_start.date()
+            else:
+                event_date = date.today()
+        
         age = self.age_on(event_date)
-        if age is None:
-            return "Unspecified"
-
-        # ----- DEFAULT MAPPING (edit to fit exact rules) -----
-        if age >= 56:
-            return "Masters Men 56+"
-        if 46 <= age <= 55:
-            return "Masters Men 46 to 55 years"
-        if 36 <= age <= 45:
-            return "Masters Men 36 to 45 years"
-        if 12 <= age <= 14:
-            return "Youth Boys & Youth Girls (12-14)"
-        if 15 <= age <= 16:
-            return "Sub-Junior Boys & Sub-Junior Girls (15 & 16)"
-        if 17 <= age <= 18:
-            return "Junior Boys & Junior Girls (17 & 18)"
-        # Under-23 placeholder range; adjust if using birth-year bands
-        if 19 <= age <= 22:
-            return "Men under-23 (19-22)"
-        if age >= 19:
-            return "Men Elite & Women Elite (19 & above)"
-        return "Other / Not categorized"
+        if age is None: return "Unspecified"
+        
+        if age >= 56: return "Masters Men 56+"
+        if 46 <= age <= 55: return "Masters Men 46 to 55 years"
+        if 36 <= age <= 45: return "Masters Men 36 to 45 years"
+        if 19 <= age <= 22: return "Men under-23 (19-22)"
+        if age >= 19: return "Men Elite & Women Elite (19 & above)"
+        return "Junior Categories"
 
     def save(self, *args, **kwargs):
-        # compute category before saving (uses EVENT_DATE from settings by default)
-        try:
-            self.category = self.assign_category()
-        except Exception:
-            # do not block save for category computation failures
-            self.category = self.category or None
+        # 1. Category Auto-Assignment
+        if not self.category:
+            try:
+                self.category = self.assign_category()
+            except:
+                pass
+
+        # 2. Registration ID Generation (e.g., CTCC-0001)
+        if not self.registration_id:
+            prefix = self.get_race_initials()
+            with transaction.atomic():
+                seq_row, _ = GlobalSequence.objects.select_for_update().get_or_create(
+                    name=f"reg_seq_{prefix}",
+                    defaults={'seq': 0}
+                )
+                seq_row.seq += 1
+                seq_row.save()
+                self.registration_id = f"{prefix}-{seq_row.seq:04d}"
+
         super().save(*args, **kwargs)
 
-    # -------------------
-    # Bib helpers & generator
-    # -------------------
-    def short_age_category(self):
+    def release_bib(self):
         """
-        Return a short age category token used in the bib (adjust mapping as needed).
-        Defaults: U18, U23, SEN (for 23-55), M56 (56+).
-        """
-        age = self.age_on(getattr(settings, "EVENT_DATE", None) or date.today())
-        if age is None:
-            # fallback: try to parse numeric from self.category
-            if self.category:
-                # crude attempt: pick first number in category if present
-                import re
-                m = re.search(r'(\d{2})', self.category)
-                if m:
-                    val = int(m.group(1))
-                    if val <= 18:
-                        return f"U{val}"
-                # otherwise shorten text
-                return (self.category.split()[0] or "GEN")[:10].upper()
-            return "GEN"
-        if age <= 18:
-            return "U18"
-        if 19 <= age <= 22:
-            return "U23"
-        if age >= 56:
-            return "M56"
-        # 23-55
-        return "SEN"
-
-    def _format_bib(self, seq_num: int):
-        """
-        Build: [DIST]-[AgeCategory]-[GENDER]-[Year]-[0001]
-        """
-        # DIST: prefer code, else slugified short name
-        if self.district_fk and self.district_fk.code:
-            dist = self.district_fk.code.upper()
-        elif self.district_fk and self.district_fk.name:
-            dist = slugify(self.district_fk.name)[:3].upper() or "UNK"
-        else:
-            dist = "UNK"
-
-        age_cat = self.short_age_category()
-        gender = (self.gender or "other")[0].upper()  # male->M, female->F, other->O
-        year = (self.created_at.year if self.created_at else timezone.now().year)
-        regno = f"{seq_num:04d}"
-        return f"{dist}-{age_cat}-{gender}-{year}-{regno}"
-
-    def release_bib(self, notify=False, max_retries: int = 3):
-        """
-        Atomically assign a bib_id if not already assigned.
-        Uses GlobalSequence for a global trailing counter (0001,0002,...).
-        Returns the bib_id.
+        Generates the District-based Bib ID.
         """
         if self.bib_id:
             return self.bib_id
 
-        district = self.district_fk
-        if district is None:
-            raise ValueError("Cannot release bib: registration has no district_fk set.")
+        prefix = self.get_race_initials()
+        
+        dist_code = self.district_fk.code.upper() if (self.district_fk and self.district_fk.code) else "UNK"
+        gender = (self.gender or "O")[0].upper()
+        year = self.race.race_start.year if (self.race and self.race.race_start) else date.today().year
 
-        # Use global sequence name "registration"
-        for attempt in range(1, max_retries + 1):
-            try:
-                with transaction.atomic():
-                    seq_row, created = GlobalSequence.objects.select_for_update().get_or_create(
-                        name='registration', defaults={'seq': 0}
-                    )
-                    seq_row.seq = F('seq') + 1
-                    seq_row.save()
-                    seq_row.refresh_from_db(fields=['seq'])
-                    seq = seq_row.seq
+        with transaction.atomic():
+            seq_key = f"bib_seq_{prefix}_{dist_code}"
+            seq_row, _ = GlobalSequence.objects.select_for_update().get_or_create(
+                name=seq_key,
+                defaults={'seq': 0}
+            )
+            seq_row.seq += 1
+            seq_row.save()
+            
+            self.bib_id = f"{prefix}-{dist_code}-{gender}-{year}-{seq_row.seq:04d}"
+            self.bib_released_at = timezone.now()
+            self.save()
+            
+        return self.bib_id
 
-                    if seq > 9999:
-                        raise ValueError("Sequence overflow for bucket: consider expanding regno digits or changing scope.")
 
-                    # assign and save bib fields (defensive save)
-                    self.bib_id = self._format_bib(seq)
-                    self.bib_released_at = timezone.now()
-                    try:
-                        self.save(update_fields=['bib_id', 'bib_released_at'])
-                    except IntegrityError:
-                        # If bib_id unique constraint failed (very rare), raise to outer retry
-                        raise
+class EmailOTP(models.Model):
+    email = models.EmailField()
 
-                # schedule notifications after commit (non-blocking wrt transaction)
-                if notify and getattr(self, 'email', None):
-                    def _send():
-                        try:
-                            send_mail(
-                                subject="Your Bib ID",
-                                message=f"Hello {self.name},\n\nYour Bib ID is: {self.bib_id}\n\nPlease save it.",
-                                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com'),
-                                recipient_list=[self.email],
-                                fail_silently=True
-                            )
-                        except Exception:
-                            pass
-                    transaction.on_commit(_send)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-                return self.bib_id
+    def is_valid(self):
+        return (timezone.now() - self.created_at).seconds < 300  # 5 min
 
-            except IntegrityError:
-                # possible race on unique bib_id; retry a few times
-                if attempt >= max_retries:
-                    raise
-                # else loop to retry
-            except Exception:
-                # other exceptions: re-raise (you can customize handling)
-                raise
 
-        # if loop falls through (shouldn't), raise
-        raise RuntimeError("Failed to generate bib after retries.")
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=15, blank=True)
+    bio = models.TextField(max_length=500, blank=True)
+    profile_image = models.ImageField(upload_to='profile_pics/', default='default.jpg', blank=True)
+    dob = models.DateField(null=True, blank=True)
+    blood_group = models.CharField(max_length=5, blank=True)
+    
+    # Identity & Address for "View More" section
+    pan_number = models.CharField(max_length=10, blank=True)
+    aadhaar_number = models.CharField(max_length=12, blank=True)
+    address_line_1 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    zip_code = models.CharField(max_length=6, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
+
+
+
+    

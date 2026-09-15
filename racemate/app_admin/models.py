@@ -1,5 +1,6 @@
 
 from django.db import models
+import uuid
 
 class DimState(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)
@@ -39,13 +40,34 @@ class DimEventType(models.Model):
         return self.name or ""
 
 
+# class DimEventCategory(models.Model):
+#     event_type = models.ForeignKey(DimEventType, on_delete=models.CASCADE, related_name="categories")
+#     name = models.CharField(max_length=150, blank=True, null=True)
+
+#     def __str__(self):
+#         return f"{self.name or ''} ({self.event_type.name or ''})"
+
 class DimEventCategory(models.Model):
     event_type = models.ForeignKey(DimEventType, on_delete=models.CASCADE, related_name="categories")
     name = models.CharField(max_length=150, blank=True, null=True)
 
+    # Public, unguessable identifier used in shareable registration links
+    # (e.g. /register/<uuid>/), instead of exposing the DB primary key.
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text="Public identifier used in the shareable registration link for this event.",
+    )
+
     def __str__(self):
         return f"{self.name or ''} ({self.event_type.name or ''})"
 
+    def registration_path(self):
+        """Relative URL for this event's public, single-event registration page."""
+        from django.urls import reverse
+        return reverse("accounts:register", kwargs={"event_uuid": self.uuid})
+    
 
 class dimDate(models.Model):
     date = models.DateField(blank=True, null=True)
@@ -73,5 +95,4 @@ class Event(models.Model):
 
     def __str__(self):
         return self.name
-
 

@@ -1,0 +1,42 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd /home/ec2-user/Racemate
+
+            echo "Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "Activating venv and installing dependencies..."
+            source venv/bin/activate
+            pip install -r requirements.txt
+
+            cd racemate
+
+            echo "Running migrations..."
+            python manage.py migrate --noinput
+
+            echo "Collecting static files..."
+            python manage.py collectstatic --noinput
+
+            echo "Restarting Gunicorn..."
+            sudo systemctl restart racemate
+
+            echo "Deploy complete."
+

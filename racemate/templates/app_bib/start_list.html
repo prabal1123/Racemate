@@ -5,54 +5,111 @@
 
 {% block content %}
 <div class="container py-4">
-  <h2 class="mb-4">Start List</h2>
-
-  <div class="text-end mb-3">
-    <a href="{% url 'app_bib:start_list_export_csv' %}" class="btn btn-outline-primary btn-sm">
-      Export CSV
-    </a>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">Start List</h2>
+      <p class="text-muted small">Manage athlete check-in and wave assignments</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'app_bib:heat_list' %}" class="btn btn-outline-dark shadow-sm">
+        <i class="bi bi-list-ol me-1"></i> Heat List
+      </a>
+      <a href="{% url 'app_bib:time_entry' %}" class="btn btn-primary shadow-sm">
+        <i class="bi bi-clock-history me-1"></i> Live Timing
+      </a>
+      <a href="{% url 'app_bib:start_list_export_csv' %}" class="btn btn-outline-primary shadow-sm">
+        <i class="bi bi-download me-1"></i> Export CSV
+      </a>
+    </div>
   </div>
 
-  <div class="card p-3 shadow-sm">
-    <table class="table table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Bib Number</th>
-          <th>Event</th>
-          <th>Gender</th>
-          <th>Age</th>
-          <th>Start Time</th>
-          <th>End Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in registrations %}
-        <tr>
-          <td>{{ r.name }}</td>
+  <div class="card p-3 shadow-sm border-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Name</th>
+            <th>Bib</th>
+            <th>Race</th>
+            <th>Heat Assignment</th>
+            <th>Age</th>
+            <th class="text-center">Attendance Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in registrations %}
+          <tr>
+            <td class="fw-bold text-dark">{{ r.name }}</td>
 
-          {# short printable bib (computed in view) #}
-          <td>{{ r.bib_public }}</td>
+            <td><code class="text-primary fw-bold">{{ r.bib_public|default:r.bib_id }}</code></td>
 
-          {# event_display is computed in the view (handles M2M / FK / plain fields) #}
-          <td>{{ r.event_display }}</td>
+            <td>
+                {% if r.race %}
+                    <span class="small">{{ r.event_display }}</span>
+                {% else %}
+                    <span class="text-danger small">No Race</span>
+                {% endif %}
+            </td>
 
-          {# keep gender formatting as before #}
-          <td>{{ r.gender|title }}</td>
+            {# UPDATED HEAT ASSIGNMENT: Now uses heat_number field #}
+            <td>
+              <form action="{% url 'app_bib:assign_heat' r.id %}" method="POST" class="d-flex gap-1">
+                {% csrf_token %}
+                <input 
+                  type="number" 
+                  name="heat_id" 
+                  value="{{ r.heat_number|default:'' }}" 
+                  placeholder="No."
+                  class="form-control form-control-sm border-info bg-light-subtle" 
+                  style="width: 70px;"
+                >
+                <button type="submit" class="btn btn-sm btn-info text-white">
+                  <i class="bi bi-check2"></i>
+                </button>
+              </form>
+              {% if r.heat_number %}
+                <small class="text-success fw-bold">Assigned to Heat {{ r.heat_number }}</small>
+              {% endif %}
+            </td>
 
-          {# use precomputed age_display (string) so template stays simple #}
-          <td>{{ r.age_display }}</td>
+            <td>{{ r.age_display }}</td>
 
-          <td>{{ r.start_time|default:"—" }}</td>
-          <td>{{ r.end_time|default:"—" }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="text-center text-muted">No participants found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            <td class="text-center" style="min-width: 150px;">
+              {# Toggle Presence Form #}
+              <form action="{% url 'app_bib:toggle_attendance' r.id %}" method="POST">
+                {% csrf_token %}
+                {% if r.is_present %}
+                  <button type="submit" class="btn btn-success btn-sm w-100 shadow-sm">
+                    <i class="bi bi-check-circle-fill me-1"></i> Present
+                  </button>
+                {% else %}
+                  <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+                    Mark Selected
+                  </button>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-5">
+              <i class="bi bi-people-fill display-4 d-block mb-3 opacity-25"></i>
+              No participants with assigned BIBs found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+<style>
+    /* Styling for the manual heat input */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+</style>
 {% endblock %}

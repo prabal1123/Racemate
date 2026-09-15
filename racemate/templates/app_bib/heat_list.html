@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Heat Assignment — Racemate{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Heat Assignment</h2>
+            <p class="text-muted small">
+                Step 2: Assign waves to athletes who have collected their Bibs.
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'app_bib:start_list' %}" class="btn btn-primary shadow-sm">
+                Go to Start List <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-5">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-1"></i> Filter View</h6>
+                    <form method="GET" class="d-flex gap-2">
+                        <select name="race_id" class="form-select" onchange="this.form.submit()">
+                            <option value="">-- All Races --</option>
+                            {% for race in races %}
+                            <option value="{{ race.id }}" {% if race.id|slugify == selected_race_id %}selected{% endif %}>
+                                {{ race.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <a href="{% url 'app_bib:heat_list' %}" class="btn btn-outline-secondary">Clear</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card h-100 shadow-sm border-0 bg-light-subtle">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-magic me-1"></i> Smart Auto-Assign (By Age)</h6>
+                    <form method="POST" action="{% url 'app_bib:auto_assign_heats' %}" class="row g-2 align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="race_id" value="{{ selected_race_id }}">
+                        
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <span class="input-group-text small bg-white">Athletes per Heat</span>
+                                <input type="number" name="size" class="form-control" value="10" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            {% if selected_race_id %}
+                                <button type="submit" class="btn btn-primary w-100">
+                                    Generate Heats for this Race
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn btn-secondary w-100" disabled title="Select a race first">
+                                    Select a Race to Auto-Assign
+                                </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                    <small class="text-muted mt-2 d-block">This will sort all visible athletes by DOB and group them.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">Athlete Name</th>
+                        <th>Bib ID</th>
+                        <th>Age / DOB</th>
+                        <th class="text-center">Current Heat</th>
+                        <th class="pe-4" style="width: 180px;">Manual Edit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registrations %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold text-dark">{{ reg.name }}</div>
+                            <small class="text-muted">{{ reg.district_fk.name|default:"General" }}</small>
+                        </td>
+                        <td>
+                            <code class="fw-bold text-primary" style="font-size: 0.95rem;">
+                                {{ reg.bib_id }}
+                            </code>
+                        </td>
+                        <td>
+                            <div class="small">{{ reg.date_of_birth|date:"d M Y" }}</div>
+                            <span class="badge bg-secondary opacity-75">{{ reg.age_on }} yrs</span>
+                        </td>
+                        <td class="text-center">
+                            {% if reg.heat_number %}
+                                <span class="badge bg-success shadow-sm px-3 py-2" style="font-size: 0.85rem;">
+                                    <i class="bi bi-fire me-1"></i> Heat {{ reg.heat_number }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-light text-muted border px-3 py-2">Not Assigned</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4">
+                            <form method="POST" action="{% url 'app_bib:assign_heat' reg.id %}" class="input-group input-group-sm">
+                                {% csrf_token %}
+                                <input type="number" name="heat_id" class="form-control" value="{{ reg.heat_number|default:'' }}" placeholder="No.">
+                                <button type="submit" class="btn btn-outline-dark" title="Save">
+                                    <i class="bi bi-save"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <i class="bi bi-person-x display-4 text-muted opacity-25 d-block mb-3"></i>
+                            <h5 class="text-muted">No Eligible Athletes Found</h5>
+                            <p class="text-muted small">Only athletes with assigned Bibs appear here.<br>Ensure you have selected a race and checked people in at the <strong>Bib List</strong>.</p>
+                            <a href="{% url 'app_bib:registration_bib_list' %}" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="bi bi-arrow-left"></i> Go to Bib List
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Styling for the manual heat input */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.02);
+    }
+</style>
+{% endblock %}
