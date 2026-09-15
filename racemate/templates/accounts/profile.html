@@ -183,9 +183,9 @@
                 {% else %}
                     <div class="p-5 text-center rounded-4" style="background: #fafafa; border: 2px dashed #eee;">
                         <p class="text-muted mb-0">No active registrations found.</p>
-                        <a href="{% url 'accounts:register' %}" class="small fw-bold text-primary text-decoration-none mt-2 d-inline-block">
-                            Find a Race →
-                        </a>
+                        <a href="{% url 'race-list' %}" class="small fw-bold text-primary text-decoration-none mt-2 d-inline-block">
+                        Find a Race →
+                    </a>
                     </div>
                 {% endif %}
             </div>
